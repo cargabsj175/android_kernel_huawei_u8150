@@ -259,7 +259,7 @@ static struct attribute *interactivex_attributes[] = {
 
 static struct attribute_group interactivex_attr_group = {
 	.attrs = interactivex_attributes,
-	.name = "interactivex",
+	.name = "InteractiveX",
 };
 
 static void interactivex_suspend(int suspend)
