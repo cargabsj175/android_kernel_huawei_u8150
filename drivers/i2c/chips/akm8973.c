@@ -57,7 +57,6 @@ static struct i2c_client *this_client;
 
 extern struct input_dev *sensor_dev;
 
-
 struct akm8973_data {
 	struct input_dev *input_dev;
 	struct work_struct work;
@@ -262,17 +261,21 @@ static int AKECS_TransRBuff(char *rbuf, int size)
 
 #if 0
 /********************************************************************/
-extern int gs_adi_sensor_flag (void );
+int Acc_buf[3];
+//extern int gs_adi_sensor_flag (void );
 extern int gs_st_data_to_compass(int accel_data [3]);
-extern int gs_adi_data_to_compass(int accel_data [3]);
+//extern int gs_adi_data_to_compass(int accel_data [3]);
 
 static int Compass_GetAccelerationData(int * accel_data )
 {
-   	if (gs_adi_sensor_flag())
-		return gs_adi_data_to_compass(accel_data);
+	printk(KERN_DEBUG "akm Compass_GetAcceleaationData");
+   	//if (gs_adi_sensor_flag())
+	//	return gs_adi_data_to_compass(accel_data);
 	
-	else
-		return gs_st_data_to_compass(accel_data);
+	//else
+	int ret=gs_st_data_to_compass(accel_data);
+	printk(KERN_DEBUG "akm Compass_GetAcceleaationData,accel_data[0]=%d,[1]=%d,[2]=%d",accel_data[0],accel_data[1],accel_data[2]);
+		return ret;
 }
 
 /**********************************************************************/
@@ -425,6 +428,7 @@ akm_aot_ioctl(struct inode *inode, struct file *file,
 		break;
 	case ECS_IOCTL_APP_SET_AFLAG:
 		atomic_set(&a_flag, flag);
+		//printk(KERN_DEBUG "Inside akm ECS_IOCTL_APP_SET_AFLAG=%d",atomic_read(&a_flag));
 		break;
 	case ECS_IOCTL_APP_GET_AFLAG:  /*get open acceleration sensor flag*/
 		flag = atomic_read(&a_flag);
@@ -785,6 +789,7 @@ int akm8973_probe(struct i2c_client *client, const struct i2c_device_id * devid)
 		printk(KERN_ERR "akm8973_probe: Failed to allocate input device\n");
 		goto exit_input_dev_alloc_failed;
 	}
+
 	AKECS_Reset();
 	mdelay(2);
 	err = AKECS_CheckChipName();
@@ -817,18 +822,18 @@ int akm8973_probe(struct i2c_client *client, const struct i2c_device_id * devid)
 	input_set_abs_params(akm->input_dev, ABS_BRAKE, -2048, 2032, 0, 0);
 
     // delete register compass input dev, and let err=0
-/*    
+//modified by Joey Jiao    
+/*
 	akm->input_dev->name = "compass";
-
 	err = input_register_device(akm->input_dev);
-*/
-    err = 0;
+
+    //err = 0;//disabled by Joey Jiao
 	if (err) {
 		printk(KERN_ERR
 		       "akm8973_probe: Unable to register input device: %s\n",
 		       akm->input_dev->name);
 		goto exit_input_register_device_failed;
-	}
+	}*/
 
 	err = misc_register(&akmd_device);
 	if (err) {
@@ -842,11 +847,11 @@ int akm8973_probe(struct i2c_client *client, const struct i2c_device_id * devid)
 		       "akm8973_probe: akm_aot_device register failed\n");
 		goto exit_misc_device_register_failed;
 	}
-
+//Modified by Joey Jiao from 0 -> 1
 #if 0
 	AKECS_Reset();
 	AKECS_StartMeasure();
-	#endif
+#endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	akm->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
@@ -861,10 +866,10 @@ int akm8973_probe(struct i2c_client *client, const struct i2c_device_id * devid)
 	AKECS_Reset();
 
 	printk(KERN_INFO "Compass akm8973 is successfully probed.\n");
-    #ifdef CONFIG_HUAWEI_HW_DEV_DCT
+#ifdef CONFIG_HUAWEI_HW_DEV_DCT
     /* detect current device successful, set the flag as present */
     set_hw_dev_flag(DEV_I2C_COMPASS);
-    #endif
+#endif
 
 	return 0;
 
@@ -892,7 +897,7 @@ static int akm8973_remove(struct i2c_client *client)
 {
 	struct akm8973_data *akm = i2c_get_clientdata(client);
 #if DEBUG
-	printk(KERN_ERR "AK8973 compass driver: init\n");
+	printk(KERN_ERR "AK8973 compass driver: remove\n");
 #endif
 	input_unregister_device(akm->input_dev);
 

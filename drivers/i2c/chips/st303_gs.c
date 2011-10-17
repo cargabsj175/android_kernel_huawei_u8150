@@ -46,8 +46,10 @@
 static struct workqueue_struct *gs_wq;
 static signed short st_sensor_data[3];
 
-#define ST303DLH_I2C_NAME "st_303dlh"
-#define ST303DLM_I2C_NAME "st_303dlm"
+//#define ST303DLH_I2C_NAME "st_303dlh"
+//#define ST303DLM_I2C_NAME "st_303dlm"
+#define ST303DLH_I2C_NAME "ST303DLH"
+#define ST303DLM_I2C_NAME "ST303DLM"
 
 enum
 {
@@ -58,7 +60,9 @@ enum
 
 extern int st303_dev_id;
 
+//Modified by Joey Jiao to seperate M860 and C8600 .config
 extern struct input_dev *sensor_dev;
+//struct input_dev *sensor_dev;
 
 enum st303_reg {
 	
@@ -97,7 +101,8 @@ enum st303_reg {
 #define FILTER_SAMPLE_NUMBER		4096           /*256LSB =1g*/  
 #define	GPIO_INT1                   19
 #define GPIO_INT2                   20
-#define GS_ST_TIMRER                    (1000*1000000)           /*1000000s*/
+//#define GS_ST_TIMRER                    (1000*1000000)           /*1000000s*/
+#define GS_ST_TIMRER                    1000           /*1000000s*/
 
 #define ECS_IOCTL_READ_ACCEL_XYZ			_IOR(0xA1, 0x06, char[3])
 #define ECS_IOCTL_APP_SET_DELAY 			_IOW(0xA1, 0x18, short)
