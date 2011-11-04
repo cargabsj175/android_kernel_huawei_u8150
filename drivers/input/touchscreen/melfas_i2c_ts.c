@@ -1425,7 +1425,10 @@ succeed_find_device:
 	INIT_WORK(&ts->work, melfas_ts_work_func);
 
     ts->is_first_point = true;
+	if(machine_is_msm7x25_u8500() || machine_is_msm7x25_um840() || machine_is_msm7x25_u8350())
 	  ts->support_multi_touch = true;
+    else
+      ts->support_multi_touch = false;
     ts->use_touch_key = false;
     ts->key_index_save = TOUCH_KEY_INDEX_NONE;
     if(board_use_tssc_touch(&ts->use_touch_key))
