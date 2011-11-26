@@ -14,4 +14,4 @@ function setenv {
 }
 
 setenv
-make -j${CPUS}
+schedtool -B -n19 -e make -j${CPUS}
