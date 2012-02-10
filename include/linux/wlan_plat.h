@@ -1,7 +1,6 @@
-/* arch/arm/mach-msm/include/mach/vmalloc.h
+/* include/linux/wlan_plat.h
  *
- * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2010 Google, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -13,15 +12,16 @@
  * GNU General Public License for more details.
  *
  */
+#ifndef _LINUX_WLAN_PLAT_H_
+#define _LINUX_WLAN_PLAT_H_
 
-#ifndef __ASM_ARCH_MSM_VMALLOC_H
-#define __ASM_ARCH_MSM_VMALLOC_H
+struct wifi_platform_data {
+	int (*set_power)(int val);
+	int (*set_reset)(int val);
+	int (*set_carddetect)(int val);
+	void *(*mem_prealloc)(int section, unsigned long size);
+	int (*get_mac_addr)(unsigned char *buf);
+	void *(*get_country_code)(char *ccode);
+};
 
-#ifdef CONFIG_VMSPLIT_2G
-#define VMALLOC_END	  (PAGE_OFFSET + 0x7A000000)
-#else
-#define VMALLOC_END	  (PAGE_OFFSET + 0x3A000000)
 #endif
-
-#endif
-
