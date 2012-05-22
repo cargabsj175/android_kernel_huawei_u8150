@@ -1,3 +1,4 @@
+
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32.9
@@ -903,7 +904,7 @@ CONFIG_WLAN=y
 # CONFIG_WLAN_PRE80211 is not set
 # CONFIG_WLAN_80211 is not set
 # CONFIG_LIBRA_SDIOIF is not set
-CONFIG_BCM4329=m
+CONFIG_BCM4329=n
 CONFIG_BCM4329_FW_PATH="/system/lib/hw/wlan/fw_bcm4329.bin"
 CONFIG_BCM4329_NVRAM_PATH="/proc/calibration"
 CONFIG_BCM4329_ENABLE_CSCAN=y

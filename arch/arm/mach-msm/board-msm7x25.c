@@ -3951,7 +3951,7 @@ int board_surport_fingers(bool * is_surport_fingers)
          return -ENOMEM;
     }
 
-        *is_surport_fingers = false;
+        *is_surport_fingers = true;
 
     return result;
 }
