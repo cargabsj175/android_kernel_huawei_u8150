@@ -29,7 +29,7 @@
 #include <linux/hrtimer.h>
 #include <linux/time.h>
 #include <linux/stddef.h>
-#include <linux/slub_def.h>
+#include <linux/slab_def.h>
 #include <linux/slab.h>
 
 #undef HUAWEI_KEY_REPORT
