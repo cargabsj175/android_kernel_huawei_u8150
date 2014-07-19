@@ -697,7 +697,7 @@ static void igmp_gq_timer_expire(unsigned long data)
 
 	in_dev->mr_gq_running = 0;
 	igmpv3_send_report(in_dev, NULL);
-	__in_dev_put(in_dev);
+	in_dev_put(in_dev);
 }
 
 static void igmp_ifc_timer_expire(unsigned long data)
@@ -709,7 +709,7 @@ static void igmp_ifc_timer_expire(unsigned long data)
 		in_dev->mr_ifc_count--;
 		igmp_ifc_start_timer(in_dev, IGMP_Unsolicited_Report_Interval);
 	}
-	__in_dev_put(in_dev);
+	in_dev_put(in_dev);
 }
 
 static void igmp_ifc_event(struct in_device *in_dev)
@@ -946,7 +946,6 @@ int igmp_rcv(struct sk_buff *skb)
 		break;
 	case IGMP_HOST_MEMBERSHIP_REPORT:
 	case IGMPV2_HOST_MEMBERSHIP_REPORT:
-	case IGMPV3_HOST_MEMBERSHIP_REPORT:
 		/* Is it our report looped back? */
 		if (skb_rtable(skb)->fl.iif == 0)
 			break;
@@ -960,6 +959,7 @@ int igmp_rcv(struct sk_buff *skb)
 		in_dev_put(in_dev);
 		return pim_rcv_v1(skb);
 #endif
+	case IGMPV3_HOST_MEMBERSHIP_REPORT:
 	case IGMP_DVMRP:
 	case IGMP_TRACE:
 	case IGMP_HOST_LEAVE_MESSAGE:
