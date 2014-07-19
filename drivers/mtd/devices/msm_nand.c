@@ -40,7 +40,7 @@ uint32_t dual_nand_ctlr_present;
 uint32_t interleave_enable;
 unsigned crci_mask;
 
-#define MSM_NAND_DMA_BUFFER_SIZE SZ_8K
+#define MSM_NAND_DMA_BUFFER_SIZE SZ_1M
 #define MSM_NAND_DMA_BUFFER_SLOTS \
 	(MSM_NAND_DMA_BUFFER_SIZE / (sizeof(((atomic_t *)0)->counter) * 8))
 
