@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32.63
-# Sat Jul 19 20:53:07 2014
+# Sat Jul 19 21:52:40 2014
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -669,6 +669,7 @@ CONFIG_IP_NF_MANGLE=y
 #
 # IPv6: Netfilter Configuration
 #
+# CONFIG_NF_DEFRAG_IPV6 is not set
 # CONFIG_NF_CONNTRACK_IPV6 is not set
 # CONFIG_IP6_NF_QUEUE is not set
 # CONFIG_IP6_NF_IPTABLES is not set
