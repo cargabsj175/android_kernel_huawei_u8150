@@ -3383,7 +3383,6 @@ static void __init virtualkeys_init(void)
 static void __init msm7x2x_init(void)
 {
 	msm_clock_init(msm_clocks_7x25, msm_num_clocks_7x25);
-	platform_add_devices(early_devices, ARRAY_SIZE(early_devices));
 
 #if defined(CONFIG_MSM_SERIAL_DEBUGGER)
 	msm_serial_debug_init(MSM_UART3_PHYS, INT_UART3,

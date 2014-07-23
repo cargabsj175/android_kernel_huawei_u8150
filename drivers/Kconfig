@@ -117,7 +117,6 @@ source "drivers/staging/Kconfig"
 source "drivers/platform/Kconfig"
 
 source "drivers/devdetect/Kconfig"
-source "drivers/platform/Kconfig"
 
 source "drivers/huawei/Kconfig"
 endmenu
