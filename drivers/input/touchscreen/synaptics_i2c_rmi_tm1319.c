@@ -29,7 +29,7 @@
  *
  */ 
 
-//#define TS_DEBUG 
+// #define TS_DEBUG 
 #undef TS_DEBUG 
 
 #ifdef TS_DEBUG
@@ -294,19 +294,18 @@ int buf_len =13;
 				input_sync(ts->input_dev);
 			}
 		}
+
 	}
 	if (ts->use_irq) {
 		enable_irq(ts->client->irq);
 		SYNAPITICS_DEBUG("enable irq\n");
 	}
 }
-
 static enum hrtimer_restart synaptics_ts_timer_func(struct hrtimer *timer)
 {
 	struct synaptics_ts_data *ts = container_of(timer, struct synaptics_ts_data, timer);
 	SYNAPITICS_DEBUG("synaptics_ts_timer_func\n");
 	queue_work(synaptics_wq, &ts->work);
-
 	hrtimer_start(&ts->timer, ktime_set(0, 12500000), HRTIMER_MODE_REL);
 	return HRTIMER_NORESTART;
 }
@@ -348,8 +347,8 @@ static int synaptics_ts_probe(
 	int snap_bottom_off;
 	uint32_t panel_version;
 	SYNAPITICS_DEBUG(" In synaptics_ts_probe: \n");
-
-if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		SYNAPITICS_DEBUG(KERN_ERR "synaptics_ts_probe: need I2C_FUNC_I2C\n");
 		ret = -ENODEV;
 		goto err_check_functionality_failed;

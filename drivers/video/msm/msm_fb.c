@@ -47,7 +47,7 @@
 #include "mdp.h"
 #include "mdp4.h"
 #ifdef CONFIG_HUAWEI_KERNEL
-#define LCD_DEFAULT_BK_LEV              (104) 
+#define LCD_DEFAULT_BK_LEV		(104) 
 #endif
 
 #ifdef CONFIG_HUAWEI_EVALUATE_POWER_CONSUMPTION
@@ -59,7 +59,6 @@
 #define INIT_IMAGE_FILE "/logo.rle"
 #else
 #define WAITTING_IMAGE_FILE	"/waitting.rle"
-
 #endif
 extern int load_565rle_image(char *filename);
 #endif
@@ -71,7 +70,7 @@ static int fbram_size;
 static struct platform_device *pdev_list[MSM_FB_MAX_DEV_LIST];
 static int pdev_list_cnt;
 
-int vsync_mode = 1;
+int vsync_mode = 0;
 
 #define MAX_FBI_LIST 32
 static struct fb_info *fbi_list[MAX_FBI_LIST];
@@ -89,10 +88,10 @@ static u32 msm_fb_pseudo_palette[16] = {
 
 u32 msm_fb_debug_enabled;
 /* Setting msm_fb_msg_level to 8 prints out ALL messages */
-u32 msm_fb_msg_level = 7;
+u32 msm_fb_msg_level = 0;
 
 /* Setting mddi_msg_level to 8 prints out ALL messages */
-u32 mddi_msg_level = 5;
+u32 mddi_msg_level = 0;
 
 extern int32 mdp_block_power_cnt[MDP_MAX_BLOCK];
 extern unsigned long mdp_timer_duration;
@@ -114,10 +113,10 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			unsigned long arg);
 static int msm_fb_mmap(struct fb_info *info, struct vm_area_struct * vma);
 
-#ifdef MSM_FB_ENABLE_DBGFS
-
-#define MSM_FB_MAX_DBGFS 1024
 #define MAX_BACKLIGHT_BRIGHTNESS 255
+
+#ifdef MSM_FB_ENABLE_DBGFS
+#define MSM_FB_MAX_DBGFS 1024
 
 int msm_fb_debugfs_file_index;
 struct dentry *msm_fb_debugfs_root;
@@ -249,7 +248,7 @@ static int msm_fb_probe(struct platform_device *pdev)
 
 	mfd->panel_info.frame_count = 0;
 #ifdef CONFIG_HUAWEI_KERNEL
-    mfd->bl_level = LCD_DEFAULT_BK_LEV;
+	mfd->bl_level = LCD_DEFAULT_BK_LEV;
 #else
 	mfd->bl_level = mfd->panel_info.bl_max;
 #endif
@@ -514,7 +513,7 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl, u32 save)
 			pdata->set_backlight(mfd);
 
 #ifdef CONFIG_HUAWEI_EVALUATE_POWER_CONSUMPTION
-            huawei_rpc_current_consuem_notify(EVENT_LCD_BACKLIGHT, bkl_lvl);
+			huawei_rpc_current_consuem_notify(EVENT_LCD_BACKLIGHT, bkl_lvl);
 #endif
 
 			if (!save)
@@ -544,11 +543,10 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 	case FB_BLANK_UNBLANK:
 		if (!mfd->panel_power_on) {
 #ifndef CONFIG_HUAWEI_KERNEL
-            mdelay(100);
+			mdelay(100);
 #else 
-            set_current_state(TASK_INTERRUPTIBLE);
-            schedule_timeout(HZ/10); 
-            
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule_timeout(HZ/10); 
 #endif
 			ret = pdata->on(mfd->pdev);
 			if (ret == 0) {
@@ -582,11 +580,12 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			mfd->op_enable = FALSE;
 			curr_pwr_state = mfd->panel_power_on;
 			mfd->panel_power_on = FALSE;
+
 #ifndef CONFIG_HUAWEI_KERNEL
-            mdelay(100);
+			mdelay(100);
 #else
-            set_current_state(TASK_INTERRUPTIBLE);
-            schedule_timeout(HZ/10); 
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule_timeout(HZ/10); 
 #endif
 
 			ret = pdata->off(mfd->pdev);
@@ -767,7 +766,7 @@ static int __init parse_tag_fota_mode(const struct tag *tag)
 __tagtable(ATAG_BOOT_FOTA_MODE, parse_tag_fota_mode);
 int fb_get_fota_mode(void)
 {
-    return fota_mode;
+	return fota_mode;
 }
 EXPORT_SYMBOL(fb_get_fota_mode);
 #endif
@@ -776,7 +775,7 @@ EXPORT_SYMBOL(fb_get_fota_mode);
 int register_framebuffer_flag = 0;
 int from_msm_fb_register(void)
 {
-    return register_framebuffer_flag;
+	return register_framebuffer_flag;
 }
 EXPORT_SYMBOL(from_msm_fb_register);
 #endif
@@ -1019,7 +1018,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	}
 /* Set it true,don't update black screen */
 #ifdef CONFIG_HUAWEI_KERNEL
-    register_framebuffer_flag = 1;
+	register_framebuffer_flag = 1;
 #endif
 	if (register_framebuffer(fbi) < 0) {
 		if (mfd->lut_update)
@@ -1057,7 +1056,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 #endif
 /* Set it flase,recovery */
 #ifdef CONFIG_HUAWEI_KERNEL
-    register_framebuffer_flag = 0;
+	register_framebuffer_flag = 0;
 #endif
 #endif
 	ret = 0;
@@ -1355,20 +1354,33 @@ static int msm_fb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 		break;
 
 	case 32:
-		if ((var->blue.offset != 8) ||
-			(var->green.offset != 16) ||
-			(var->red.offset != 24) ||
-			(var->blue.length != 8) ||
-			(var->green.length != 8) ||
-			(var->red.length != 8) ||
-			(var->blue.msb_right != 0) ||
-			(var->green.msb_right != 0) ||
-			(var->red.msb_right != 0) ||
-			!(((var->transp.offset == 0) &&
-				(var->transp.length == 8)) ||
-			((var->transp.offset == 0) &&
-				(var->transp.length == 8))))
+		/* Figure out if the user meant RGBA or ARGB
+		   and verify the position of the RGB components */
+
+		if (var->transp.offset == 24) {
+			if ((var->blue.offset != 0) ||
+			    (var->green.offset != 8) ||
+			    (var->red.offset != 16))
 				return -EINVAL;
+		} else if (var->transp.offset == 0) {
+			if ((var->blue.offset != 8) ||
+			    (var->green.offset != 16) ||
+			    (var->red.offset != 24))
+				return -EINVAL;
+		} else
+			return -EINVAL;
+
+		/* Check the common values for both RGBA and ARGB */
+
+		if ((var->blue.length != 8) ||
+		    (var->green.length != 8) ||
+		    (var->red.length != 8) ||
+		    (var->transp.length != 8) ||
+		    (var->blue.msb_right != 0) ||
+		    (var->green.msb_right != 0) ||
+		    (var->red.msb_right != 0))
+			return -EINVAL;
+
 		break;
 
 	default:
@@ -1425,7 +1437,10 @@ static int msm_fb_set_par(struct fb_info *info)
 		break;
 
 	case 32:
-		mfd->fb_imgType = MDP_RGBA_8888;
+		if (var->transp.offset == 24)
+			mfd->fb_imgType = MDP_ARGB_8888;
+		else
+			mfd->fb_imgType = MDP_RGBA_8888;
 		break;
 
 	default:
@@ -1490,7 +1505,7 @@ int msm_fb_resume_sw_refresher(struct msm_fb_data_type *mfd)
 	return 0;
 }
 
-#ifdef CONFIG_FB_MSM_MDP31
+#if defined CONFIG_FB_MSM_MDP31
 static int mdp_blit_split_height(struct fb_info *info,
 				struct mdp_blit_req *req)
 {
@@ -1621,7 +1636,7 @@ static int mdp_blit_split_height(struct fb_info *info,
 int mdp_blit(struct fb_info *info, struct mdp_blit_req *req)
 {
 	int ret;
-#ifdef CONFIG_FB_MSM_MDP31
+#if defined CONFIG_FB_MSM_MDP31 || defined CONFIG_FB_MSM_MDP30
 	unsigned int remainder = 0, is_bpp_4 = 0;
 	struct mdp_blit_req splitreq;
 	int s_x_0, s_x_1, s_w_0, s_w_1, s_y_0, s_y_1, s_h_0, s_h_1;
@@ -1652,10 +1667,15 @@ int mdp_blit(struct fb_info *info, struct mdp_blit_req *req)
 	if (unlikely(req->dst_rect.h == 0 || req->dst_rect.w == 0))
 		return 0;
 
-#ifdef CONFIG_FB_MSM_MDP31
+#if defined CONFIG_FB_MSM_MDP31
 	/* MDP width split workaround */
 	remainder = (req->dst_rect.w)%32;
-	is_bpp_4 = (mdp_get_bytes_per_pixel(req->dst.format) == 4) ? 1 : 0;
+	ret = mdp_get_bytes_per_pixel(req->dst.format);
+	if (ret <= 0) {
+		printk(KERN_ERR "mdp_ppp: incorrect bpp!\n");
+		return -EINVAL;
+	}
+	is_bpp_4 = (ret == 4) ? 1 : 0;
 
 	if ((is_bpp_4 && (remainder == 6 || remainder == 14 ||
 	remainder == 22 || remainder == 30)) || remainder == 3 ||
@@ -1809,6 +1829,147 @@ int mdp_blit(struct fb_info *info, struct mdp_blit_req *req)
 	else
 		ret = mdp_ppp_blit(info, req);
 	return ret;
+#elif defined CONFIG_FB_MSM_MDP30
+	/* MDP width split workaround */
+	remainder = (req->dst_rect.w)%16;
+	ret = mdp_get_bytes_per_pixel(req->dst.format);
+	if (ret <= 0) {
+		printk(KERN_ERR "mdp_ppp: incorrect bpp!\n");
+		return -EINVAL;
+	}
+	is_bpp_4 = (ret == 4) ? 1 : 0;
+
+	if ((is_bpp_4 && (remainder == 6 || remainder == 14))) {
+
+		/* make new request as provide by user */
+		splitreq = *req;
+
+		/* break dest roi at width*/
+		d_y_0 = d_y_1 = req->dst_rect.y;
+		d_h_0 = d_h_1 = req->dst_rect.h;
+		d_x_0 = req->dst_rect.x;
+
+		if (remainder == 14)
+			d_w_1 = (req->dst_rect.w - 14) / 2 + 4;
+		else if (remainder == 6)
+			d_w_1 = req->dst_rect.w / 2 - 1;
+		else
+			d_w_1 = (req->dst_rect.w - 1) / 2 - 1;
+
+		d_w_0 = req->dst_rect.w - d_w_1;
+		d_x_1 = d_x_0 + d_w_0;
+
+		/* blit first region */
+		if (((splitreq.flags & 0x07) == 0x07) ||
+			((splitreq.flags & 0x07) == 0x0)) {
+
+			if (splitreq.flags & MDP_ROT_90) {
+				s_x_0 = s_x_1 = req->src_rect.x;
+				s_w_0 = s_w_1 = req->src_rect.w;
+				s_y_0 = req->src_rect.y;
+				s_h_1 = (req->src_rect.h * d_w_1) /
+					req->dst_rect.w;
+				s_h_0 = req->src_rect.h - s_h_1;
+				s_y_1 = s_y_0 + s_h_0;
+				if (d_w_1 >= 8 * s_h_1) {
+					s_h_1++;
+					s_y_1--;
+				}
+			} else {
+				s_y_0 = s_y_1 = req->src_rect.y;
+				s_h_0 = s_h_1 = req->src_rect.h;
+				s_x_0 = req->src_rect.x;
+				s_w_1 = (req->src_rect.w * d_w_1) /
+					req->dst_rect.w;
+				s_w_0 = req->src_rect.w - s_w_1;
+				s_x_1 = s_x_0 + s_w_0;
+				if (d_w_1 >= 8 * s_w_1) {
+					s_w_1++;
+					s_x_1--;
+				}
+			}
+
+			splitreq.src_rect.h = s_h_0;
+			splitreq.src_rect.y = s_y_0;
+			splitreq.dst_rect.h = d_h_0;
+			splitreq.dst_rect.y = d_y_0;
+			splitreq.src_rect.x = s_x_0;
+			splitreq.src_rect.w = s_w_0;
+			splitreq.dst_rect.x = d_x_0;
+			splitreq.dst_rect.w = d_w_0;
+		} else {
+			if (splitreq.flags & MDP_ROT_90) {
+				s_x_0 = s_x_1 = req->src_rect.x;
+				s_w_0 = s_w_1 = req->src_rect.w;
+				s_y_0 = req->src_rect.y;
+				s_h_1 = (req->src_rect.h * d_w_0) /
+					req->dst_rect.w;
+				s_h_0 = req->src_rect.h - s_h_1;
+				s_y_1 = s_y_0 + s_h_0;
+				if (d_w_0 >= 8 * s_h_1) {
+					s_h_1++;
+					s_y_1--;
+				}
+			} else {
+				s_y_0 = s_y_1 = req->src_rect.y;
+				s_h_0 = s_h_1 = req->src_rect.h;
+				s_x_0 = req->src_rect.x;
+				s_w_1 = (req->src_rect.w * d_w_0) /
+					req->dst_rect.w;
+				s_w_0 = req->src_rect.w - s_w_1;
+				s_x_1 = s_x_0 + s_w_0;
+				if (d_w_0 >= 8 * s_w_1) {
+					s_w_1++;
+					s_x_1--;
+				}
+			}
+			splitreq.src_rect.h = s_h_0;
+			splitreq.src_rect.y = s_y_0;
+			splitreq.dst_rect.h = d_h_1;
+			splitreq.dst_rect.y = d_y_1;
+			splitreq.src_rect.x = s_x_0;
+			splitreq.src_rect.w = s_w_0;
+			splitreq.dst_rect.x = d_x_1;
+			splitreq.dst_rect.w = d_w_1;
+		}
+
+		/* No need to split in height */
+		ret = mdp_ppp_blit(info, &splitreq);
+
+		if (ret)
+			return ret;
+
+		/* blit second region */
+		if (((splitreq.flags & 0x07) == 0x07) ||
+			((splitreq.flags & 0x07) == 0x0)) {
+			splitreq.src_rect.h = s_h_1;
+			splitreq.src_rect.y = s_y_1;
+			splitreq.dst_rect.h = d_h_1;
+			splitreq.dst_rect.y = d_y_1;
+			splitreq.src_rect.x = s_x_1;
+			splitreq.src_rect.w = s_w_1;
+			splitreq.dst_rect.x = d_x_1;
+			splitreq.dst_rect.w = d_w_1;
+		} else {
+			splitreq.src_rect.h = s_h_1;
+			splitreq.src_rect.y = s_y_1;
+			splitreq.dst_rect.h = d_h_0;
+			splitreq.dst_rect.y = d_y_0;
+			splitreq.src_rect.x = s_x_1;
+			splitreq.src_rect.w = s_w_1;
+			splitreq.dst_rect.x = d_x_0;
+			splitreq.dst_rect.w = d_w_0;
+		}
+
+		/* No need to split in height ... just width */
+		ret = mdp_ppp_blit(info, &splitreq);
+
+		if (ret)
+			return ret;
+
+	} else
+		ret = mdp_ppp_blit(info, req);
+	return ret;
 #else
 	ret = mdp_ppp_blit(info, req);
 	return ret;
@@ -1829,12 +1990,17 @@ static inline void msm_fb_dma_barrier_for_rect(struct fb_info *info,
 	 *       included in the address range rather than
 	 *       doing multiple calls for each row.
 	 */
-
+	unsigned long start;
+	size_t size;
 	char * const pmem_start = info->screen_base;
 	int bytes_per_pixel = mdp_get_bytes_per_pixel(img->format);
-	unsigned long start = (unsigned long)pmem_start + img->offset +
+	if (bytes_per_pixel <= 0) {
+		printk(KERN_ERR "%s incorrect bpp!\n", __func__);
+		return;
+	}
+	start = (unsigned long)pmem_start + img->offset +
 		(img->width * rect->y + rect->x) * bytes_per_pixel;
-	size_t size  = (rect->h * img->width + rect->w) * bytes_per_pixel;
+	size  = (rect->h * img->width + rect->w) * bytes_per_pixel;
 	(*dma_barrier_fp) ((void *) start, size);
 
 }
@@ -2277,8 +2443,8 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 	struct mdp_page_protection fb_page_protection;
 #ifdef CONFIG_HUAWEI_KERNEL
 	struct msm_fb_panel_data *pdata;
-    unsigned int contrast_val = 0;
-#endif    
+	unsigned int contrast_val = 0;
+#endif
 	int ret = 0;
 
 	switch (cmd) {
@@ -2479,20 +2645,20 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 #endif
 		break;
 #ifdef CONFIG_HUAWEI_KERNEL
-    case MSMFB_SET_DISPLAY_CONTRAST:
+	case MSMFB_SET_DISPLAY_CONTRAST:
 
-        pdata = (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
-        ret = copy_from_user(&contrast_val, argp, sizeof(unsigned int));
-        
-        if(ret)
-            return ret;
-        if((pdata) && (pdata->set_contrast))
-        {
-            pdata->set_contrast(mfd, contrast_val);
-        }
-        ret = 0;
-        break;
-#endif        
+		pdata = (struct msm_fb_panel_data *)mfd->pdev->dev.platform_data;
+		ret = copy_from_user(&contrast_val, argp, sizeof(unsigned int));
+
+		if(ret)
+			return ret;
+		if((pdata) && (pdata->set_contrast))
+		{
+			pdata->set_contrast(mfd, contrast_val);
+		}
+		ret = 0;
+		break;
+#endif
 
 	default:
 		MSM_FB_INFO("MDP: unknown ioctl (cmd=%d) received!\n", cmd);

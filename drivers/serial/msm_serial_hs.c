@@ -913,7 +913,7 @@ static void msm_hs_dmov_rx_callback(struct msm_dmov_cmd *cmd_ptr,
 	msm_uport = container_of(cmd_ptr, struct msm_hs_port, rx.xfer);
 
 #ifdef CONFIG_HUAWEI_KERNEL
-    /* Change to HI_SOFTIRQ to schedule */
+	/* Change to HI_SOFTIRQ to schedule */
 	tasklet_hi_schedule(&msm_uport->rx.tlet);
 #else
 	tasklet_schedule(&msm_uport->rx.tlet);
@@ -1181,7 +1181,7 @@ static irqreturn_t msm_hs_isr(int irq, void *dev)
 		/* TX FIFO is empty */
 		msm_uport->imr_reg &= ~UARTDM_ISR_TXLEV_BMSK;
 #ifdef CONFIG_HUAWEI_FEATURE_U8220_BLUETOOTH
-        msm_uport->imr_reg |= UARTDM_ISR_TX_READY_BMSK;
+		msm_uport->imr_reg |= UARTDM_ISR_TX_READY_BMSK;
 #endif
 		msm_hs_write(uport, UARTDM_IMR_ADDR, msm_uport->imr_reg);
 		if (!msm_hs_check_clock_off_locked(uport))
@@ -1359,7 +1359,8 @@ static int msm_hs_startup(struct uart_port *uport)
 
 	tx->xfer.complete_func = msm_hs_dmov_tx_callback;
 
-	tx->xfer.crci_mask = msm_dmov_build_crci_mask(msm_uport->dma_tx_crci);
+	tx->xfer.crci_mask = msm_dmov_build_crci_mask(1,
+						      msm_uport->dma_tx_crci);
 
 	tx->command_ptr->cmd = CMD_LC |
 	    CMD_DST_CRCI(msm_uport->dma_tx_crci) | CMD_MODE_BOX;
@@ -1412,17 +1413,21 @@ static int msm_hs_startup(struct uart_port *uport)
 /* Initialize tx and rx data structures */
 static int uartdm_init_port(struct uart_port *uport)
 {
+	int ret = 0;
 	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
 	struct msm_hs_tx *tx = &msm_uport->tx;
 	struct msm_hs_rx *rx = &msm_uport->rx;
 
 	/* Allocate the command pointer. Needs to be 64 bit aligned */
 	tx->command_ptr = kmalloc(sizeof(dmov_box), GFP_KERNEL | __GFP_DMA);
+	if (!tx->command_ptr)
+		return -ENOMEM;
 
 	tx->command_ptr_ptr = kmalloc(sizeof(u32 *), GFP_KERNEL | __GFP_DMA);
-
-	if (!tx->command_ptr || !tx->command_ptr_ptr)
-		return -ENOMEM;
+	if (!tx->command_ptr_ptr) {
+		ret = -ENOMEM;
+		goto free_tx_command_ptr;
+	}
 
 	tx->mapped_cmd_ptr = dma_map_single(uport->dev, tx->command_ptr,
 					    sizeof(dmov_box), DMA_TO_DEVICE);
@@ -1443,17 +1448,33 @@ static int uartdm_init_port(struct uart_port *uport)
 
 	rx->pool = dma_pool_create("rx_buffer_pool", uport->dev,
 				   UARTDM_RX_BUF_SIZE, 16, 0);
+	if (!rx->pool) {
+		pr_err("%s(): cannot allocate rx_buffer_pool", __func__);
+		ret = -ENOMEM;
+		goto exit_tasket_init;
+	}
 
 	rx->buffer = dma_pool_alloc(rx->pool, GFP_KERNEL, &rx->rbuffer);
+	if (!rx->buffer) {
+		pr_err("%s(): cannot allocate rx->buffer", __func__);
+		ret = -ENOMEM;
+		goto free_pool;
+	}
 
 	/* Allocate the command pointer. Needs to be 64 bit aligned */
 	rx->command_ptr = kmalloc(sizeof(dmov_box), GFP_KERNEL | __GFP_DMA);
+	if (!rx->command_ptr) {
+		pr_err("%s(): cannot allocate rx->command_ptr", __func__);
+		ret = -ENOMEM;
+		goto free_rx_buffer;
+	}
 
 	rx->command_ptr_ptr = kmalloc(sizeof(u32 *), GFP_KERNEL | __GFP_DMA);
-
-	if (!rx->command_ptr || !rx->command_ptr_ptr || !rx->pool ||
-	    !rx->buffer)
-		return -ENOMEM;
+	if (!rx->command_ptr_ptr) {
+		pr_err("%s(): cannot allocate rx->command_ptr_ptr", __func__);
+		ret = -ENOMEM;
+		goto free_rx_command_ptr;
+	}
 
 	rx->command_ptr->num_rows = ((UARTDM_RX_BUF_SIZE >> 4) << 16) |
 					 (UARTDM_RX_BUF_SIZE >> 4);
@@ -1465,7 +1486,8 @@ static int uartdm_init_port(struct uart_port *uport)
 
 	rx->xfer.complete_func = msm_hs_dmov_rx_callback;
 
-	rx->xfer.crci_mask = msm_dmov_build_crci_mask(msm_uport->dma_rx_crci);
+	rx->xfer.crci_mask = msm_dmov_build_crci_mask(1,
+						      msm_uport->dma_rx_crci);
 
 	rx->command_ptr->cmd = CMD_LC |
 	    CMD_SRC_CRCI(msm_uport->dma_rx_crci) | CMD_MODE_BOX;
@@ -1486,7 +1508,32 @@ static int uartdm_init_port(struct uart_port *uport)
 
 	INIT_DELAYED_WORK(&rx->flip_insert_work, flip_insert_work);
 
-	return 0;
+	return ret;
+
+free_rx_command_ptr:
+	kfree(rx->command_ptr);
+
+free_rx_buffer:
+	dma_pool_free(msm_uport->rx.pool, msm_uport->rx.buffer,
+			msm_uport->rx.rbuffer);
+
+free_pool:
+	dma_pool_destroy(msm_uport->rx.pool);
+
+exit_tasket_init:
+	wake_lock_destroy(&msm_uport->rx.wake_lock);
+	wake_lock_destroy(&msm_uport->dma_wake_lock);
+	tasklet_kill(&msm_uport->tx.tlet);
+	tasklet_kill(&msm_uport->rx.tlet);
+	dma_unmap_single(uport->dev, msm_uport->tx.mapped_cmd_ptr_ptr,
+			sizeof(u32 *), DMA_TO_DEVICE);
+	dma_unmap_single(uport->dev, msm_uport->tx.mapped_cmd_ptr,
+			sizeof(dmov_box), DMA_TO_DEVICE);
+	kfree(msm_uport->tx.command_ptr_ptr);
+
+free_tx_command_ptr:
+	kfree(msm_uport->tx.command_ptr);
+	return ret;
 }
 
 static int __init msm_hs_probe(struct platform_device *pdev)
@@ -1704,8 +1751,8 @@ static struct uart_ops msm_hs_ops = {
 
 void hci_trigger_hs_port_tx_ready(void){
 	if (g_msm_hs_port  != NULL){
-	    g_msm_hs_port->imr_reg |= UARTDM_ISR_TX_READY_BMSK;
-	    msm_hs_write(&g_msm_hs_port->uport, UARTDM_IMR_ADDR, g_msm_hs_port->imr_reg);
+		g_msm_hs_port->imr_reg |= UARTDM_ISR_TX_READY_BMSK;
+		msm_hs_write(&g_msm_hs_port->uport, UARTDM_IMR_ADDR, g_msm_hs_port->imr_reg);
 	}
 }
 

@@ -111,35 +111,18 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
 
+config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
+	bool "interactiveX"
+	select CPU_FREQ_GOV_INTERACTIVEX
+	help
+	 Use the CPUFreq governor 'interactivex' as default.
+
 config CPU_FREQ_DEFAULT_GOV_SMARTASS2
 	bool "smartass2"
 	select CPU_FREQ_GOV_SMARTASS2
 	help
 	  Use the CPUFreq governor 'smartassV2' as default.
-
-config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
-	bool "interactive"
-	select CPU_FREQ_GOV_INTERACTIVE
-	help
-	 Use the 'interactive' governor as default. This gets full cpu frequency
-	 scaling for workloads that are latency sensitive, typically interactive
-	 workloads..
-
-
-config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
-	bool "interactive"
-	select CPU_FREQ_GOV_INTERACTIVEX
-	help
-	 Use the CPUFreq governor 'interactivex' as default.
-
 endchoice
-
-config CPU_FREQ_GOV_SAVAGEDZEN
-	tristate "'savagedzen' cpufreq governor"
-	depends on CPU_FREQ
-	help
-	  'Savaged-Zen' - a "smartass" based governor
-	  If in doubt, say N.
 
 config CPU_FREQ_GOV_PERFORMANCE
 	tristate "'performance' governor"
@@ -196,13 +179,6 @@ config CPU_FREQ_GOV_ONDEMAND
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_INTERACTIVE
-	tristate "'interactive' cpufreq policy governor"
-	help
-	 'interactive' - This driver adds a dynamic cpufreq policy governor.
-	 Designed for low latency burst workloads. Scaling it done when coming
-	 out of idle instead of polling.
-
 config CPU_FREQ_GOV_CONSERVATIVE
 	tristate "'conservative' cpufreq governor"
 	depends on CPU_FREQ
@@ -226,14 +202,6 @@ config CPU_FREQ_GOV_CONSERVATIVE
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_SMARTASS2
-	tristate "'smartassV2' cpufreq governor"
-	depends on CPU_FREQ
-	help
-	  'smartassV2' - a "smart" optimized governor for the hero!
-
-	  If in doubt, say N.
-
 config CPU_FREQ_GOV_INTERACTIVEX
 	tristate "'interactivex' cpufreq policy governor"
 	help
@@ -242,27 +210,12 @@ config CPU_FREQ_GOV_INTERACTIVEX
 
 	If in doubt, say N.
 
-config CPU_FREQ_GOV_MINMAX
-	tristate "'minmax' cpufreq governor"
+config CPU_FREQ_GOV_SMARTASS2
+	tristate "'smartassV2' cpufreq governor"
 	depends on CPU_FREQ
 	help
-	  'minmax' - this driver tries to minimize the frequency jumps by limiting
-	  the the selected frequencies to either the min or the max frequency of
-	  the policy. The frequency is selected according to the load.
+	  'smartassV2' - a "smart" optimized governor for the hero!
 
 	  If in doubt, say N.
-
-config CPU_FREQ_MIN_TICKS
-	int "Ticks between governor polling interval."
-	default 10
-	help
-	  Minimum number of ticks between polling interval for governors.
-
-config CPU_FREQ_SAMPLING_LATENCY_MULTIPLIER
-	int "Sampling rate multiplier for governors."
-	default 1000
-	help
-	  Sampling latency rate multiplied by the cpu switch latency.
-	  Affects governor polling.
 
 endif	# CPU_FREQ

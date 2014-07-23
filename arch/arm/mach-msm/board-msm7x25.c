@@ -21,7 +21,6 @@
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/bootmem.h>
-#include <linux/usb/mass_storage_function.h>
 #include <linux/power_supply.h>
 
 
@@ -49,7 +48,7 @@
 #include <mach/memory.h>
 #include <mach/msm_battery.h>
 #include <mach/rpc_server_handset.h>
-
+#include <mach/msm_tsif.h>
 
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>
@@ -86,6 +85,11 @@
 #ifdef CONFIG_ARCH_MSM7X27
 #include <linux/msm_kgsl.h>
 #endif
+
+#ifdef CONFIG_USB_ANDROID
+#include <linux/usb/android.h>
+#endif
+
 #ifdef HUAWEI_BCM4329
 #ifdef CONFIG_HUAWEI_WIFI_SDCC
 #include <linux/wifi_tiwlan.h>
@@ -101,22 +105,25 @@
 #ifdef CONFIG_HUAWEI_KERNEL
 #include <linux/touch_platform_config.h>
 #endif
-#define USB_SERIAL_LEN 20
-smem_huawei_vender usb_para_data;
 
 #ifdef CONFIG_HUAWEI_KERNEL
 unsigned int usb_boot_mode = 0;
 static char buf_virtualkey[500];
 static ssize_t  buf_vkey_size=0;
 #endif
-/* keep usb parameters transfered from modem */
-app_usb_para usb_para_info;
+
 #ifdef CONFIG_HUAWEI_KERNEL
 atomic_t touch_detected_yet = ATOMIC_INIT(0); 
 #define MSM_7x25_TOUCH_INT       29
 #define MSM_7x25_RESET_PIN 		 96
 struct vreg *vreg_gp5 = NULL;
 #endif
+
+#define USB_SERIAL_LEN 20
+smem_huawei_vender usb_para_data;
+
+/* keep usb parameters transfered from modem */
+app_usb_para usb_para_info;
 
 /* all the pid used by mobile */
 /* new requirement: usb tethering */
@@ -350,6 +357,19 @@ static struct usb_composition usb_func_composition[] = {
 	},
 #endif
 };
+static struct usb_mass_storage_platform_data mass_storage_pdata = {
+	.nluns		= 1,
+	.vendor		= "GOOGLE",
+	.product	= "Mass Storage",
+	.release	= 0xFFFF,
+};
+static struct platform_device mass_storage_device = {
+	.name           = "usb_mass_storage",
+	.id             = -1,
+	.dev            = {
+		.platform_data          = &mass_storage_pdata,
+	},
+};
 static struct android_usb_platform_data android_usb_pdata = {
 #ifdef CONFIG_USB_AUTO_INSTALL
 	.vendor_id	= HUAWEI_VID,
@@ -370,7 +390,6 @@ static struct android_usb_platform_data android_usb_pdata = {
 	.product_name	= "Qualcomm HSUSB Device",
 	.manufacturer_name = "Qualcomm Incorporated",
 #endif  /* CONFIG_USB_AUTO_INSTALL */
-	.nluns = 1,
 };
 static struct platform_device android_usb_device = {
 	.name	= "android_usb",
@@ -479,7 +498,7 @@ static int hsusb_rpc_connect(int connect)
 }
 #endif
 
-#if defined(CONFIG_USB_MSM_OTG_72K) || defined(CONFIG_USB_EHCI_MSM)
+#if defined(CONFIG_USB_MSM_OTG_72K) || defined(CONFIG_USB_EHCI_MSM) || defined(CONFIG_USB_EHCI_MSM7201)
 static int msm_hsusb_rpc_phy_reset(void __iomem *addr)
 {
 	return msm_hsusb_phy_reset();
@@ -495,6 +514,7 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.pmic_register_vbus_sn   = msm_pm_app_register_vbus_sn,
 	.pmic_unregister_vbus_sn = msm_pm_app_unregister_vbus_sn,
 	.pmic_enable_ldo         = msm_pm_app_enable_usb_ldo,
+	.pclk_required_during_lpm = 1,
 };
 
 #ifdef CONFIG_USB_GADGET
@@ -659,7 +679,7 @@ static struct android_pmem_platform_data android_pmem_pdata = {
 static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.name = "pmem_adsp",
 	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
-	.cached = 1,
+	.cached = 1, //psyke83: better to keep enabled?
 };
 
 static struct android_pmem_platform_data android_pmem_audio_pdata = {
@@ -694,6 +714,7 @@ static struct platform_device android_pmem_kernel_ebi1_device = {
 
 static struct msm_handset_platform_data hs_platform_data = {
 	.hs_name = "7k_handset",
+	.pwr_key_delay_ms = 500, /* 0 will disable end key */
 };
 
 static struct platform_device hs_device = {
@@ -703,6 +724,31 @@ static struct platform_device hs_device = {
 		.platform_data = &hs_platform_data,
 	},
 };
+
+/* TSIF begin */
+#if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
+
+#define TSIF_B_SYNC      GPIO_CFG(87, 5, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA)
+#define TSIF_B_DATA      GPIO_CFG(86, 3, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA)
+#define TSIF_B_EN        GPIO_CFG(85, 3, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA)
+#define TSIF_B_CLK       GPIO_CFG(84, 4, GPIO_INPUT, GPIO_PULL_DOWN, GPIO_2MA)
+
+static const struct msm_gpio tsif_gpios[] = {
+	{ .gpio_cfg = TSIF_B_CLK,  .label =  "tsif_clk", },
+	{ .gpio_cfg = TSIF_B_EN,   .label =  "tsif_en", },
+	{ .gpio_cfg = TSIF_B_DATA, .label =  "tsif_data", },
+	{ .gpio_cfg = TSIF_B_SYNC, .label =  "tsif_sync", },
+};
+
+static struct msm_tsif_platform_data tsif_platform_data = {
+	.num_gpios = ARRAY_SIZE(tsif_gpios),
+	.gpios = tsif_gpios,
+	.tsif_clk = "tsif_clk",
+	.tsif_pclk = "tsif_pclk",
+	.tsif_ref_clk = "tsif_ref_clk",
+};
+#endif /* defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE) */
+/* TSIF end   */
 
 #define LCDC_CONFIG_PROC          21
 #define LCDC_UN_CONFIG_PROC       22
@@ -2320,6 +2366,7 @@ static struct platform_device *devices[] __initdata = {
 #endif
 
 #ifdef CONFIG_USB_ANDROID
+	&mass_storage_device,
 	&android_usb_device,
 #endif
 	&msm_device_i2c,
@@ -2384,6 +2431,9 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_ARCH_MSM7X27
 	&msm_device_kgsl,
 #endif
+#if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
+	&msm_device_tsif,
+#endif
 	&hs_device,
 	&msm_batt_device,
 #ifdef CONFIG_HUAWEI_BATTERY
@@ -2432,7 +2482,7 @@ static struct msm_acpu_clock_platform_data msm7x2x_clock_data = {
 void msm_serial_debug_init(unsigned int base, int irq,
 			   struct device *clk_device, int signal_irq);
 
-#ifdef CONFIG_USB_EHCI_MSM
+#if defined(CONFIG_USB_EHCI_MSM) || defined(CONFIG_USB_EHCI_MSM7201)
 static void msm_hsusb_vbus_power(unsigned phy_info, int on)
 {
 	if (on)
@@ -2448,6 +2498,7 @@ static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 };
 static void __init msm7x2x_init_host(void)
 {
+printk("msm7x2x_init_host()\n");	
 	if (machine_is_msm7x25_ffa() || machine_is_msm7x27_ffa())
 		return;
 
@@ -3331,14 +3382,15 @@ static void __init virtualkeys_init(void)
 
 static void __init msm7x2x_init(void)
 {
-	if (socinfo_init() < 0)
-		BUG();
 	msm_clock_init(msm_clocks_7x25, msm_num_clocks_7x25);
+	platform_add_devices(early_devices, ARRAY_SIZE(early_devices));
 
 #if defined(CONFIG_MSM_SERIAL_DEBUGGER)
 	msm_serial_debug_init(MSM_UART3_PHYS, INT_UART3,
 			&msm_device_uart3.dev, 1);
 #endif
+
+#if defined(CONFIG_SMC91X)
 	if (machine_is_msm7x25_ffa() || machine_is_msm7x27_ffa()) {
 		smc91x_resources[0].start = 0x98000300;
 		smc91x_resources[0].end = 0x980003ff;
@@ -3354,6 +3406,7 @@ static void __init msm7x2x_init(void)
 				__func__);
 		}
 	}
+#endif
 
 	if (cpu_is_msm7x27())
 		msm7x2x_clock_data.max_axi_khz = 200000;
@@ -3411,6 +3464,9 @@ static void __init msm7x2x_init(void)
 	msm_device_gadget_peripheral.dev.platform_data = &msm_gadget_pdata;
 #endif
 #endif
+#if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
+	msm_device_tsif.dev.platform_data = &tsif_platform_data;
+#endif
 
 	platform_add_devices(devices, ARRAY_SIZE(devices));
 #ifdef CONFIG_MSM_CAMERA
@@ -3455,8 +3511,7 @@ static void __init msm7x2x_init(void)
 #endif
 	lcdc_gpio_init();
 	msm_fb_add_devices();
-	rmt_storage_add_ramfs();
-#ifdef CONFIG_USB_EHCI_MSM
+#if defined(CONFIG_USB_EHCI_MSM) || defined(CONFIG_USB_EHCI_MSM7201)
 	msm7x2x_init_host();
 #endif
 #ifdef CONFIG_HUAWEI_JOGBALL
@@ -3653,6 +3708,10 @@ static void __init msm7x2x_map_io(void)
        //msm_clock_init(msm_clocks_7x25, msm_num_clocks_7x25);
        /*qinwei 20100709, Update for 6010 Baseline end*/
 	msm_msm7x2x_allocate_memory_regions();
+
+	if (socinfo_init() < 0)
+		BUG();
+
 }
 
 

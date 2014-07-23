@@ -63,7 +63,7 @@ struct usb_composition {
 };
 #endif
 
-#ifdef CONFIG_USB_GADGET_MSM_72K
+#if defined(CONFIG_USB_GADGET_MSM_72K) || defined(CONFIG_USB_EHCI_MSM7201)
 enum chg_type {
 	USB_CHG_TYPE__SDP,
 	USB_CHG_TYPE__CARKIT,
@@ -138,6 +138,7 @@ struct msm_otg_platform_data {
 	enum cdr_auto_reset	cdr_autoreset;
 	enum hs_drv_amplitude	drv_ampl;
 	int			phy_reset_sig_inverted;
+	int			pclk_required_during_lpm;
 
 	/* pmic notfications apis */
 	int (*pmic_notif_init) (void);

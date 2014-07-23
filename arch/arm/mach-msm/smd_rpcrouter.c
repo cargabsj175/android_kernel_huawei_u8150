@@ -1132,6 +1132,12 @@ struct msm_rpc_endpoint *msm_rpc_open(void)
 	return ept;
 }
 
+void msm_rpc_read_wakeup(struct msm_rpc_endpoint *ept)
+{
+	ept->forced_wakeup = 1;
+	wake_up(&ept->wait_q);
+}
+
 int msm_rpc_close(struct msm_rpc_endpoint *ept)
 {
 	return msm_rpcrouter_destroy_local_endpoint(ept);
@@ -1419,7 +1425,7 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 	struct rr_header hdr;
 	struct rpc_request_hdr *rq = buffer;
 	struct rr_remote_endpoint *r_ept;
-	struct msm_rpc_reply *reply;
+	struct msm_rpc_reply *reply = NULL;
 	int max_tx;
 	int tx_cnt;
 	char *tx_buf;
@@ -1473,7 +1479,6 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 		}
 		hdr.dst_pid = reply->pid;
 		hdr.dst_cid = reply->cid;
-		set_avail_reply(ept, reply);
 		IO("REPLY to xid=%d @ %d:%08x (%d bytes)\n",
 		   be32_to_cpu(rq->xid), hdr.dst_pid, hdr.dst_cid, count);
 	}
@@ -1526,9 +1531,15 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 	}
 
  write_release_lock:
-
 	/* if reply, release wakelock after writing to the transport */
 	if (rq->type != 0) {
+		/* Upon failure, add reply tag to the pending list.
+		** Else add reply tag to the avail/free list. */
+		if (count < 0)
+			set_pend_reply(ept, reply);
+		else
+			set_avail_reply(ept, reply);
+
 		spin_lock_irqsave(&ept->reply_q_lock, flags);
 		if (list_empty(&ept->reply_pend_q)) {
 			D("%s: release reply lock on ept %p\n", __func__, ept);
@@ -1695,12 +1706,15 @@ int __msm_rpc_read(struct msm_rpc_endpoint *ept,
 
 	if (ept->flags & MSM_RPC_UNINTERRUPTIBLE) {
 		if (timeout < 0) {
-			wait_event(ept->wait_q, ept_packet_available(ept));
+			wait_event(ept->wait_q, (ept_packet_available(ept) ||
+						   ept->forced_wakeup));
 			if (!msm_rpc_clear_netreset(ept))
 				return -ENETRESET;
 		} else {
 			rc = wait_event_timeout(
-				ept->wait_q, ept_packet_available(ept),
+				ept->wait_q,
+				(ept_packet_available(ept) ||
+				 ept->forced_wakeup),
 				timeout);
 			if (!msm_rpc_clear_netreset(ept))
 				return -ENETRESET;
@@ -1710,20 +1724,28 @@ int __msm_rpc_read(struct msm_rpc_endpoint *ept,
 	} else {
 		if (timeout < 0) {
 			rc = wait_event_interruptible(
-				ept->wait_q, ept_packet_available(ept));
+				ept->wait_q, (ept_packet_available(ept) ||
+					      ept->forced_wakeup));
 			if (!msm_rpc_clear_netreset(ept))
 				return -ENETRESET;
 			if (rc < 0)
 				return rc;
 		} else {
 			rc = wait_event_interruptible_timeout(
-				ept->wait_q, ept_packet_available(ept),
+				ept->wait_q,
+				(ept_packet_available(ept) ||
+				 ept->forced_wakeup),
 				timeout);
 			if (!msm_rpc_clear_netreset(ept))
 				return -ENETRESET;
 			if (rc == 0)
 				return -ETIMEDOUT;
 		}
+	}
+
+	if (ept->forced_wakeup) {
+		ept->forced_wakeup = 0;
+		return 0;
 	}
 
 	spin_lock_irqsave(&ept->read_q_lock, flags);
@@ -1968,6 +1990,28 @@ int msm_rpc_unregister_server(struct msm_rpc_endpoint *ept,
 		return -ENOENT;
 	rpcrouter_destroy_server(server);
 	return 0;
+}
+
+int msm_rpc_get_curr_pkt_size(struct msm_rpc_endpoint *ept)
+{
+	unsigned long flags;
+	struct rr_packet *pkt;
+	int rc = 0;
+
+	if (!ept)
+		return -EINVAL;
+
+	if (!msm_rpc_clear_netreset(ept))
+		return -ENETRESET;
+
+	spin_lock_irqsave(&ept->read_q_lock, flags);
+	if (!list_empty(&ept->read_q)) {
+		pkt = list_first_entry(&ept->read_q, struct rr_packet, list);
+		rc = pkt->length;
+	}
+	spin_unlock_irqrestore(&ept->read_q_lock, flags);
+
+	return rc;
 }
 
 static int msm_rpcrouter_modem_notify(struct notifier_block *this,

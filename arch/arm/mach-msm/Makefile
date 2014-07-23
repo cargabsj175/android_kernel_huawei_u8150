@@ -2,7 +2,7 @@ obj-y += io.o dma.o memory.o
 obj-y += clock.o
 obj-y += modem_notifier.o
 obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
-obj-$(CONFIG_DEBUG_FS) += nohlt.o
+obj-$(CONFIG_DEBUG_FS) += nohlt.o clock-debug.o
 
 obj-$(CONFIG_MSM_PROC_COMM) += proc_comm.o
 ifndef CONFIG_ARCH_MSM8X60
@@ -68,6 +68,7 @@ obj-$(CONFIG_MSM_RPC_PING) += ping_mdm_rpc_client.o
 obj-$(CONFIG_MSM_RPC_PROC_COMM_TEST) += proc_comm_test.o
 obj-$(CONFIG_MSM_RPC_PING) += ping_mdm_rpc_client.o ping_apps_server.o
 obj-$(CONFIG_MSM_RPC_OEM_RAPI) += oem_rapi_client.o
+obj-$(CONFIG_MSM_RPC_WATCHDOG) += rpc_dog_keepalive.o
 obj-$(CONFIG_MSM_RPCSERVER_WATCHDOG) += rpc_server_dog_keepalive.o
 obj-$(CONFIG_MSM_RPCSERVER_TIME_REMOTE) += rpc_server_time_remote.o
 obj-$(CONFIG_MSM_DALRPC) += dal.o
@@ -77,6 +78,7 @@ obj-$(CONFIG_MSM_ADSP) += qdsp5/
 obj-$(CONFIG_MSM7KV2_AUDIO) += qdsp5v2/
 obj-$(CONFIG_MSM_RPCSERVER_HANDSET) += rpc_server_handset.o
 obj-$(CONFIG_MSM_QDSP6) += qdsp6/
+obj-$(CONFIG_MSM8X60_AUDIO) += qdsp6v2/
 obj-$(CONFIG_MSM_HW3D) += hw3d.o
 ifdef CONFIG_MSM_N_WAY_SMSM
 	obj-$(CONFIG_PM) += pm2.o
@@ -90,13 +92,10 @@ obj-$(CONFIG_MSM_DMA_TEST) += dma_test.o
 
 #add by mzh
 obj-$(CONFIG_HUAWEI_BATTERY) += huawei_battery.o 
-
 obj-$(CONFIG_HUAWEI_U8220_KEYBOARD) += keypad_linux_u8220.o
 #obj-$(CONFIG_HUAWEI_U8220_JOGBALL) +=jogball_device.o 
 obj-$(CONFIG_HUAWEI_JOGBALL) +=jogball_device.o 
-
 obj-$(CONFIG_HUAWEI_MSM_VIBRATOR) += msm_vibrator.o huawei_serial_server.o kernel_msm_msg.o
-
 #/*add code to support JOY(U8120) */
 obj-$(CONFIG_HUAWEI_FEATURE_OFN_KEY) += msm_ofn_key.o
 
@@ -116,7 +115,12 @@ obj-$(CONFIG_MACH_QSD8X50A_SURF) += board-qsd8x50.o
 obj-$(CONFIG_MACH_QSD8X50A_FFA) += board-qsd8x50.o
 obj-$(CONFIG_MACH_QSD8X50A_ST1_5) += board-qsd8x50a-st1x.o
 obj-$(CONFIG_ARCH_MSM8X60) += devices-msm8x60.o clock-8x60.o acpuclock-8x60.o
-obj-$(CONFIG_ARCH_MSM8X60) += clock-rpm.o
+obj-$(CONFIG_ARCH_MSM8X60) += clock-rpm.o spm.o restart.o
+
+ifdef CONFIG_ARCH_MSM8X60
+	obj-$(CONFIG_CPU_IDLE) += cpuidle.o
+endif
+
 obj-$(CONFIG_MACH_MSM8X60_RUMI3) += board-msm8x60.o
 obj-$(CONFIG_MACH_MSM8X60_SIM) += board-msm8x60.o
 obj-$(CONFIG_MACH_MSM8X60_SURF) += board-msm8x60.o
@@ -147,9 +151,7 @@ obj-$(CONFIG_MSM_NPA_REMOTE_ONCRPC) += npa_remote_rpc_client.o
 obj-$(CONFIG_ARCH_MSM7X30) += spm.o
 
 obj-$(CONFIG_HUAWEI_KEY_TEST) += huawei_key_test.o
-
 obj-$(CONFIG_HUAWEI_RGB_KEY_LIGHT) += RGB_led.o
-
 obj-$(CONFIG_HUAWEI_SMEM_SLEEP_LOG) += smem_sleep_log.o
 
 obj-$(CONFIG_SMMU)		+= smmu_driver.o smmu_driver_enum.o

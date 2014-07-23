@@ -183,10 +183,8 @@ static void audamrnb_send_data(struct audio *audio, unsigned needed);
 static void audamrnb_config_hostpcm(struct audio *audio);
 static void audamrnb_buffer_refresh(struct audio *audio);
 static void audamrnb_dsp_event(void *private, unsigned id, uint16_t *msg);
-#ifdef CONFIG_HAS_EARLYSUSPEND
 static void audamrnb_post_event(struct audio *audio, int type,
 		union msm_audio_event_payload payload);
-#endif
 
 /* must be called with audio->lock held */
 static int audamrnb_enable(struct audio *audio)
@@ -198,6 +196,7 @@ static int audamrnb_enable(struct audio *audio)
 	if (audio->enabled)
 		return 0;
 
+	audio->dec_state = MSM_AUD_DECODER_STATE_NONE;
 	audio->out_tail = 0;
 	audio->out_needed = 0;
 
@@ -808,7 +807,6 @@ static long audamrnb_ioctl(struct file *file, unsigned int cmd,
 	switch (cmd) {
 	case AUDIO_START:
 		MM_DBG("AUDIO_START\n");
-		audio->dec_state = MSM_AUD_DECODER_STATE_NONE;
 		rc = audamrnb_enable(audio);
 		if (!rc) {
 			rc = wait_event_interruptible_timeout(audio->wait,
@@ -1249,7 +1247,6 @@ static int audamrnb_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
 static void audamrnb_post_event(struct audio *audio, int type,
 		union msm_audio_event_payload payload)
 {
@@ -1266,7 +1263,6 @@ static void audamrnb_post_event(struct audio *audio, int type,
 		e_node = kmalloc(sizeof(struct audamrnb_event), GFP_ATOMIC);
 		if (!e_node) {
 			MM_ERR("No mem to post event %d\n", type);
-			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
 			return;
 		}
 	}
@@ -1279,6 +1275,7 @@ static void audamrnb_post_event(struct audio *audio, int type,
 	wake_up(&audio->event_wait);
 }
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
 static void audamrnb_suspend(struct early_suspend *h)
 {
 	struct audamrnb_suspend_ctl *ctl =

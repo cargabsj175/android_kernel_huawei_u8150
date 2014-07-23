@@ -232,8 +232,7 @@ static void __die(const char *str, int err, struct thread_info *thread, struct p
 	struct task_struct *tsk = thread->task;
 	static int die_counter;
 #ifdef CONFIG_HUAWEI_CRASH_DUMP
-
-        notify_die(0, str, regs, err, 0, SIGSEGV);
+	notify_die(0, str, regs, err, 0, SIGSEGV);
 #endif
 	printk(KERN_EMERG "Internal error: %s: %x [#%d]" S_PREEMPT S_SMP "\n",
 	       str, err, ++die_counter);
@@ -444,12 +443,12 @@ do_cache_op(unsigned long start, unsigned long end, int flags)
 		if (end > vma->vm_end)
 			end = vma->vm_end;
 
-		flush_cache_user_range(vma, start, end);
+		up_read(&mm->mmap_sem);
+		flush_cache_user_range(start, end);
 #if defined(CONFIG_ARCH_MSM7X25) || defined(CONFIG_ARCH_MSM7X27) 
-
 		dmb();
 #endif
-
+		return;
 	}
 	up_read(&mm->mmap_sem);
 }

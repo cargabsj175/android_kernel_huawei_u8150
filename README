@@ -1,16 +1,3 @@
-============
-How to compile the U8160 kernel for U8150
-
-make ARCH=arm cyanogen_u8150_defconfig
-./build-kernel.sh
-
-OR, the manual way:
-
-make ARCH=arm CROSS_COMPILE="/home/me/src/android-ndk-r6/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-"
-
-============
-
-
 	Linux kernel release 2.6.xx <http://kernel.org/>
 
 These are the release notes for Linux version 2.6.  Read them carefully,

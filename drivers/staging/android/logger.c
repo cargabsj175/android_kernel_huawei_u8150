@@ -23,7 +23,6 @@
 #include <linux/miscdevice.h>
 #include <linux/uaccess.h>
 #include <linux/poll.h>
-#include <linux/slab.h>
 #include <linux/time.h>
 #include "logger.h"
 
@@ -432,10 +431,7 @@ static int logger_release(struct inode *ignored, struct file *file)
 {
 	if (file->f_mode & FMODE_READ) {
 		struct logger_reader *reader = file->private_data;
-		struct logger_log *log = reader->log;
-		mutex_lock(&log->mutex);
 		list_del(&reader->list);
-		mutex_unlock(&log->mutex);
 		kfree(reader);
 	}
 

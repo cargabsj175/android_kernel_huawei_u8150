@@ -54,6 +54,8 @@ config ARCH_MSM8X60
 	select MSM_ADM3
 	select REGULATOR
 	select MSM8660_TLMM
+	select ARCH_HAS_CPU_IDLE_WAIT
+	select MSM_DIRECT_SCLK_ACCESS
 
 endchoice
 
@@ -300,7 +302,7 @@ config MACH_MSM8X60_FFA
 	help
 	  Support for the Qualcomm MSM8x60 FFA eval board.
 
-# add CONFIG_HUAWEI_KERNEL MACRO define in kernel	
+# add CONFIG_HUAWEI_KERNEL MACRO define in kernel
 config MACH_MSM7X25_U8100
 	depends on ARCH_MSM7X25
 	depends on !MSM_STACKED_MEMORY
@@ -488,7 +490,6 @@ endmenu
 config  HUAWEI_KERNEL
 	bool "HUAWEI Product"
 	depends on ARCH_MSM7X25	
-	
 
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
@@ -713,6 +714,7 @@ config HUAWEI_SETTING_TIMER_FOR_VIBRATOR_OFF
 	default n
 	help
 	  Say Y here if you want to support setting timer for vibrator off.
+
 config HTC_HEADSET
 	tristate "HTC 2 Wire detection driver"
 	default n
@@ -958,6 +960,13 @@ config MSM_RPCSERVER_WATCHDOG
 	help
 	  The dog_keepalive server handles watchdog events.
 
+config MSM_RPC_WATCHDOG
+	depends on MSM_ONCRPCROUTER
+	default n
+	bool "Watchdog RPC client"
+	help
+	  The dog_keepalive client module.
+
 config MSM_RPC_PING
 	depends on MSM_ONCRPCROUTER && DEBUG_FS
 	default m
@@ -1129,6 +1138,13 @@ config MSM_QDSP6
 	default y
 	help
 	  Enable support for qdsp6. This provides audio and video functionality.
+
+config MSM8X60_AUDIO
+	tristate "MSM8X60 support"
+	depends on ARCH_MSM8X60 && ANDROID_PMEM
+	default y
+	help
+	  Enable support for qdsp6v2. This provides audio functionality.
 
 config MSM_VREG_SWITCH_INVERTED
 	bool "Reverse vreg switch polarity"
