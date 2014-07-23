@@ -78,7 +78,7 @@ static inline int reg_read(struct gs_data *gs , int reg)
 
 	val = i2c_smbus_read_byte_data(gs->client, reg);
 	if (val < 0)
-		printk(KERN_ERR "gs_st i2c_smbus_read_byte_data failed\n");
+		printk(KERN_ERR "i2c_smbus_read_byte_data failed\n");
 
 	mutex_unlock(&gs->mlock);
 
@@ -91,7 +91,7 @@ static inline int reg_write(struct gs_data *gs, int reg, uint8_t val)
 	mutex_lock(&gs->mlock);
 	ret = i2c_smbus_write_byte_data(gs->client, reg, val);
 	if(ret < 0) {
-		printk(KERN_ERR "gs_st i2c_smbus_write_byte_data failed\n");
+		printk(KERN_ERR "i2c_smbus_write_byte_data failed\n");
 	}
 	mutex_unlock(&gs->mlock);
 
@@ -111,8 +111,7 @@ static inline int reg_write(struct gs_data *gs, int reg, uint8_t val)
 
 static int sensor_data[4];
 /*adjust device name */
-//change from st-35de to ST35DE to make akmd2 works well by Joey Jiao
-static char st_device_id[] = "ST35DE";
+static char st_device_id[] = "st_35de";
 
 int gs_st_data_to_compass(int accel_data [3])
 {
@@ -120,7 +119,6 @@ int gs_st_data_to_compass(int accel_data [3])
 	accel_data[0]=sensor_data[0]/2;
 	accel_data[1]=sensor_data[1]/2;
 	accel_data[2]=sensor_data[2]/2;
-//printk(KERN_DEBUG "gs_st_data_to_compass[0][1][2]=%d,%d,%d",accel_data[0],accel_data[1],accel_data[2]);
 	return 0;
 
 }
@@ -129,7 +127,6 @@ int gs_st_data_to_compass(int accel_data [3])
 
 static int gs_st_open(struct inode *inode, struct file *file)
 {			
-//printk(KERN_DEBUG "gs_st_open");
        reg_read(this_gs_data, GS_ST_REG_STATUS ); /* read status */
 	
 	reg_write(this_gs_data, GS_ST_REG_CTRL1, GS_ST_CTRL1_PD|
@@ -153,7 +150,7 @@ static int gs_st_open(struct inode *inode, struct file *file)
 
 static int gs_st_release(struct inode *inode, struct file *file)
 {
-	//printk(KERN_DEBUG "gs_st_release");
+	
 	 reg_write(this_gs_data, GS_ST_REG_CTRL1, 0x00); 
 	
 	if (this_gs_data->use_irq)
@@ -173,7 +170,7 @@ static int
 gs_st_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	   unsigned long arg)
 {
-	//printk(KERN_DEBUG "gs_st_ioctl");
+	
 	int i;
 	void __user *argp = (void __user *)arg;
 	int accel_buf[3];
@@ -184,12 +181,10 @@ gs_st_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	{
 
 		case ECS_IOCTL_APP_SET_AFLAG:     /*set open acceleration sensor flag*/
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_SET_AFLAG1");
 			if (copy_from_user(&flag, argp, sizeof(flag)))
 				return -EFAULT;
 				break;
 		case ECS_IOCTL_APP_SET_DELAY:
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_SET_DELAY1");
 			if (copy_from_user(&flag, argp, sizeof(flag)))
 				return -EFAULT;
 				break;
@@ -201,30 +196,26 @@ gs_st_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	{
 		case ECS_IOCTL_APP_SET_AFLAG:
 			atomic_set(&a_flag, flag);
-	//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_SET_AFLAG2=%d",atomic_read(&a_flag));
 			break;
 		case ECS_IOCTL_APP_GET_AFLAG:  /*get open acceleration sensor flag*/
 			flag = atomic_read(&a_flag);
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_GET_AFLAG2=%d",flag);
 			break;
 		case ECS_IOCTL_APP_SET_DELAY:
 			
 			if(flag)
 				accel_delay = flag;
 			else
-				accel_delay = GS_ST_TIMRER;
-				//accel_delay = 10;   /*10ms*/
-			//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_SET_DELAY2=%d",accel_delay);
+				accel_delay = 10;   /*10ms*/
+			
 			break;
+			
 		case ECS_IOCTL_APP_GET_DELAY:
 			flag = accel_delay;
-			//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_GET_DELAY2=%d",accel_delay);
 			break;
 			
 		case ECS_IOCTL_READ_ACCEL_XYZ:
-			//printk(KERN_DEBUG "Inside gs ECS_IOCTL_READ_ACCEL_XYZ2=%d,%d,%d",accel_buf[0],accel_buf[1],accel_buf[2]);
 			for(i=0;i<3;i++)
-				gs_st_data_to_compass(accel_buf);//why 3 times?
+				gs_st_data_to_compass(accel_buf);
 			break;
 		default:
 			break;
@@ -232,26 +223,22 @@ gs_st_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	switch (cmd) 
 	{
 		case ECS_IOCTL_APP_GET_AFLAG:
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_GET_AFLAG3");
 			if (copy_to_user(argp, &flag, sizeof(flag)))
 				return -EFAULT;
 			
 			break;
 
 		case ECS_IOCTL_APP_GET_DELAY:
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_APP_GET_DELAY3");
 			if (copy_to_user(argp, &flag, sizeof(flag)))
 			return -EFAULT;
 			
 			break;
 			
 		case ECS_IOCTL_READ_ACCEL_XYZ:
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_READ_ACCEL_XYZ3");
 			if (copy_to_user(argp, &accel_buf, sizeof(accel_buf)))
 				return -EFAULT;
 			break;
 		case ECS_IOCTL_READ_DEVICEID:
-//printk(KERN_DEBUG "Inside gs ECS_IOCTL_READ_DEVICEID3");
 			if (copy_to_user(argp, st_device_id, sizeof(st_device_id)))
 				return -EFAULT;
 			break;
@@ -274,14 +261,15 @@ static struct miscdevice gsensor_device = {
 	.fops = &gs_st_fops,
 };
 
+
 static void gs_work_func(struct work_struct *work)
 {
-	//printk(KERN_DEBUG "gs_work_func");
 	int status;	
 	int x,y,z;
 	struct gs_data *gs = container_of(work, struct gs_data, work);
 	int	sesc = accel_delay/1000;
 	int nsesc = (accel_delay%1000)*1000000;
+
        
 	 status = reg_read(gs, GS_ST_REG_STATUS ); /* read status */
 	
@@ -352,16 +340,23 @@ static void gs_work_func(struct work_struct *work)
 		y = (MG_PER_SAMPLE*46*(s16)y)/FILTER_SAMPLE_NUMBER/10;
 		z = (MG_PER_SAMPLE*46*(s16)z)/FILTER_SAMPLE_NUMBER/10;
 		x *=(-1);		
-//printk(KERN_DEBUG "Inside gs_st x=%d,y=%d,z=%d,sensor_data[0][1][2]=%d,%d,%d",x,y,z,-sensor_data[0],sensor_data[1],sensor_data[2]);
+
 		input_report_abs(gs->input_dev, ABS_X, x);			
 		input_report_abs(gs->input_dev, ABS_Y, y);			
 		input_report_abs(gs->input_dev, ABS_Z, z);
 		input_sync(gs->input_dev);
+
+
+
+		
+
+
 	}
 	if (gs->use_irq)
 		enable_irq(gs->client->irq);
 	else
 		hrtimer_start(&gs->timer, ktime_set(sesc, nsesc), HRTIMER_MODE_REL);
+
 	
 }
 
@@ -385,7 +380,6 @@ static irqreturn_t gs_irq_handler(int irq, void *dev_id)
 
 static int gs_config_int_pin(void)
 {
-	//printk(KERN_DEBUG "gs_config_int_pin");
 	int err;
 
      err = gpio_request(GPIO_INT1, "gpio_gs_int");
@@ -409,7 +403,7 @@ static int gs_config_int_pin(void)
 
 static void gs_free_int(void)
 {
-	//printk(KERN_DEBUG "gs_free_int");
+
 	gpio_free(GPIO_INT1);
 
 }
@@ -478,10 +472,10 @@ static int gs_probe(
 	i2c_set_clientdata(client, gs);
 
 #if 0
-	printk(KERN_DEBUG "gs_probe if 0");
+	
     ret = i2c_smbus_write_byte_data(gs->client, 0x20, 0x47); /* device command = ctrl_reg1 */
 	if (ret < 0) {
-		printk(KERN_ERR "gs_probe i2c_smbus_write_byte_data failed for ctrl_reg1\n");
+		printk(KERN_ERR "i2c_smbus_write_byte_data failed\n");
 		/* fail? */
 		goto err_detect_failed;
 	}
@@ -490,7 +484,7 @@ static int gs_probe(
 
 	ret = reg_write(gs, GS_ST_REG_CTRL2, 0x00); /* device command = ctrl_reg2 */
 	if (ret < 0) {
-		printk(KERN_ERR "gs_probe i2c_smbus_write_byte_data failed for ctrl_reg2\n");
+		printk(KERN_ERR "i2c_smbus_write_byte_data failed\n");
 		/* fail? */
 		goto err_detect_failed;
 	}
@@ -499,7 +493,7 @@ static int gs_probe(
 
 	ret = i2c_smbus_write_byte_data(gs->client, 0x22, 0x04); /* device command = ctrl_reg3 */
 	if (ret < 0) {
-		printk(KERN_ERR "gs_probe i2c_smbus_write_byte_data failed for ctrl_reg2\n");
+		printk(KERN_ERR "i2c_smbus_write_byte_data failed\n");
 		/* fail? */
 		goto err_detect_failed;
 	}
@@ -560,7 +554,7 @@ static int gs_probe(
 		if (ret == 0)
 			gs->use_irq = 1;
 		else
-			dev_err(&client->dev, "gs_probe request_irq failed\n");
+			dev_err(&client->dev, "request_irq failed\n");
 	}
 #endif 
 
@@ -654,7 +648,7 @@ static int gs_suspend(struct i2c_client *client, pm_message_t mesg)
 	if (gs->power) {
 		ret = gs->power(0);
 		if (ret < 0)
-			printk(KERN_ERR "gs_suspend power off failed\n");
+			printk(KERN_ERR "gs_resume power off failed\n");
 	}
 	return 0;
 }
@@ -728,7 +722,6 @@ static void __exit gs_exit(void)
 
 module_init(gs_init);
 module_exit(gs_exit);
-
 
 MODULE_DESCRIPTION("accessor  Driver");
 MODULE_LICENSE("GPL");

@@ -132,7 +132,7 @@ static int AKI2C_RxData(char *rxData, int length)
 
 static int AKI2C_TxData(char *txData, int length)
 {
-#if 1
+#if 0
 	struct i2c_msg msg[] = {
 		{
 		 .addr = this_client->addr,
@@ -155,7 +155,7 @@ static void AKECS_Report_Value(short *rbuf)
 	struct st303_data *data = i2c_get_clientdata(this_client);
 
 #if DEBUG
-	printk("AKECS_Report_Value: %d %d %d ", rbuf[0], rbuf[1], rbuf[2]);
+	printk("%d %d %d ", rbuf[0], rbuf[1], rbuf[2]);
 	printk("%d %d %d ", rbuf[3], rbuf[4], rbuf[5]);
 	printk("\n");
 #endif
@@ -388,7 +388,6 @@ st303d_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 			}
 			
 #if DEBUG
-			printk("Inside rwbuf[0-6]=%d,%d,%d,%d,%d,%d,%d",rwbuf[0],rwbuf[1],rwbuf[2],rwbuf[3],rwbuf[4],rwbuf[5],rwbuf[6],rwbuf[7]);
 			printk("m %d ",(signed short)(((rwbuf[1])<<8)|rwbuf[2]));
 			printk(" %d ",(signed short)(((rwbuf[3])<<8)|rwbuf[4]));
 			printk(" %d ",(signed short)(((rwbuf[5])<<8)|rwbuf[6]));
@@ -402,7 +401,6 @@ st303d_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 #if DEBUG
 			printk("ECS_IOCTL_WRITE %x\n", cmd);
 			printk(" len %02x:", rwbuf[0]);
-			int i;
 			for(i=0; i<rwbuf[0]; i++){
 				printk(" %02x", rwbuf[i+1]);
 			}

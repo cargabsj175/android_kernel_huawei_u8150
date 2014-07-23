@@ -62,17 +62,12 @@
 
 extern void sdioh_sdmmc_devintr_off(sdioh_info_t *sd);
 extern void sdioh_sdmmc_devintr_on(sdioh_info_t *sd);
-extern int sdio_reset_comm(struct mmc_card *card);
 
 int sdio_function_init(void);
 void sdio_function_cleanup(void);
 
 #define DESCRIPTION "bcmsdh_sdmmc Driver"
 #define AUTHOR "Broadcom Corporation"
-
-#ifdef CUSTOMER_HW4
-void dhd_reset_chip(void);
-#endif
 
 /* module param defaults */
 static int clockoverride = 0;
@@ -99,22 +94,7 @@ static int bcmsdh_sdmmc_probe(struct sdio_func *func,
 	sd_trace(("sdio_device: 0x%04x\n", func->device));
 	sd_trace(("Function#: 0x%04x\n", func->num));
 
-	/*Linux native mmc stack enables high speed only if card's CCCR
-	version >=1.20. BCM4329 reports CCCR Version 1.10 but it supports
-	high speed*/
-#ifdef MMC_SDIO_BROKEN_CCCR_REV
-        if( func->vendor == SDIO_VENDOR_ID_BROADCOM && \
-                func->device == SDIO_DEVICE_ID_BROADCOM_4329)
-        {
-                sd_trace(("setting high speed support ignoring card CCCR\n"));
-                func->card->cccr.high_speed = 1;
-        }
-#endif
 	if (func->num == 1) {
-#ifdef CUSTOMER_HW4
-                dhd_reset_chip();
-                sdio_reset_comm(func->card);
-#endif
 		sdio_func_0.num = 0;
 		sdio_func_0.card = func->card;
 		gInstance->func[0] = &sdio_func_0;
@@ -161,11 +141,58 @@ static const struct sdio_device_id bcmsdh_sdmmc_ids[] = {
 
 MODULE_DEVICE_TABLE(sdio, bcmsdh_sdmmc_ids);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)) && defined(CONFIG_PM)
+static int bcmsdh_sdmmc_suspend(struct device *pdev)
+{
+	struct sdio_func *func = dev_to_sdio_func(pdev);
+	mmc_pm_flag_t sdio_flags;
+	int ret = 0;
+
+	if (func->num != 2)
+		return 0;
+
+	sdio_flags = sdio_get_host_pm_caps(func);
+
+	if (!(sdio_flags & MMC_PM_KEEP_POWER)) {
+		sd_err(("can't keep power while host "
+				"is suspended\n", __FUNCTION__));
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/* keep power while host suspended */
+	ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
+	if (ret) {
+		sd_err(("error while trying to keep power\n", __FUNCTION__));
+		goto out;
+	}
+
+out:
+	return ret;
+}
+
+static int bcmsdh_sdmmc_resume(struct device *pdev)
+{
+	/* nothing to do since MMC_PM_KEEP_POWER is cleared by MMC stack */
+	return 0;
+}
+
+static const struct dev_pm_ops bcmsdh_sdmmc_pm_ops = {
+	.suspend	= bcmsdh_sdmmc_suspend,
+	.resume		= bcmsdh_sdmmc_resume,
+};
+#endif
+
 static struct sdio_driver bcmsdh_sdmmc_driver = {
 	.probe		= bcmsdh_sdmmc_probe,
 	.remove		= bcmsdh_sdmmc_remove,
 	.name		= "bcmsdh_sdmmc",
 	.id_table	= bcmsdh_sdmmc_ids,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 32)) && defined(CONFIG_PM)
+	.drv = {
+		.pm     = &bcmsdh_sdmmc_pm_ops,
+	},
+#endif
 	};
 
 struct sdos_info {

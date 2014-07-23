@@ -1,6 +1,8 @@
 config BCM4329
 	tristate "Broadcom 4329 wireless cards support"
-	depends on WIRELESS_EXT && MMC
+	depends on MMC
+	select WIRELESS_EXT
+	select WEXT_PRIV
 	---help---
 	  This module adds support for wireless adapters based on
 	  Broadcom 4329 chipset.
@@ -10,30 +12,97 @@ config BCM4329
 	  If you choose to build a module, it'll be called dhd. Say M if
 	  unsure.
 
+config USE_CUSTOM_OOB_GPIO_NUM
+	depends on BCM4329
+	bool "use custom oob gpio"
+	default n
+	---help---
+    Use custom out of band gpio
+    Used by Huawei U8160/U8180 and possibly other devices
+
+config CUSTOM_OOB_GPIO_NUM
+	int "custom oob gpio number"
+	depends on USE_CUSTOM_OOB_GPIO_NUM
+    default 17
+
+config USE_CUSTOM_SDCC_WIFI_SLOT
+	depends on BCM4329
+	bool "use custom sdcc wifi slot"
+	default n
+	---help---
+    Use custom sdcc wifi slot
+    Used by Huawei U8160/U8180 and possibly other devices
+
+config CUSTOM_SDCC_WIFI_SLOT
+	int "custom sdcc slot number"
+	depends on USE_CUSTOM_SDCC_WIFI_SLOT
+    default 2
+
+config BCM4329_FIRST_SCAN
+	depends on BCM4329
+	bool "first scan support"
+	default n
+	---help---
+	Initiate broadcast scan (active scan) just after
+	initializing with network interface.
+
 config BCM4329_FW_PATH
 	depends on BCM4329
 	string "Firmware path"
-	default "/system/lib/hw/wlan/fw_bcm4329.bin"
+	default "/system/etc/firmware/fw_bcm4329.bin"
 	---help---
 	  Path to the firmware file.
 
 config BCM4329_NVRAM_PATH
 	depends on BCM4329
 	string "NVRAM path"
-	default "/system/lib/hw/wlan/nvram.txt"
+	default "/proc/calibration"
 	---help---
 	  Path to the calibration file.
 
-config BCM4329_ENABLE_CSCAN
-        depends on BCM4329
-        bool "Enable CSCAN"
-        default n
-        ---help---
-          Enable the use of CSCAN methods.
+config BCM4329_WIFI_CONTROL_FUNC
+	bool "Use bcm4329_wlan device"
+	depends on BCM4329
+	default n
+	---help---
+	   Use this option to get various parameters from architecture specific
+	   bcm4329_wlan platform device. Say n if unsure.
 
-config BCM4329_ENABLE_PNO_SUPPORT
-        depends on BCM4329_ENABLE_CSCAN
-        bool "Enable PNO_SUPPORT"
-        default n
-        ---help---
-          Enable the use of PNO_SUPPORT methods.
+if BCM4329_WIFI_CONTROL_FUNC
+
+config BCM4329_DHD_USE_STATIC_BUF
+	bool "Use static buffer"
+	depends on BCM4329
+	default n
+	---help---
+	   Use static buffer from kernel heap allocated during bcm4329_wlan
+	   platform device creation.
+
+config BCM4329_HW_OOB
+	bool "Use out of band interrupt"
+	depends on BCM4329
+	default n
+	---help---
+	   Use out of band interrupt for wake on wireless.
+
+config BCM4329_OOB_INTR_ONLY
+	bool "Use out of band interrupt only"
+	depends on BCM4329
+	default n
+	---help---
+	   Use out of band interrupt for all interrupts(including SDIO interrupts).
+
+config BCM4329_GET_CUSTOM_MAC_ENABLE
+	bool "Use custom mac address"
+	depends on BCM4329
+	default n
+	---help---
+	   Use mac address provided by bcm4329_wlan platform device.
+
+config BCM4329_CSCAN_ENABLE
+	bool "Enable Combo Scan"
+	depends on BCM4329
+	default n
+	---help---
+	   Enable Combo Scan
+endif
