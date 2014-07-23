@@ -860,4 +860,3 @@ module_exit(aps_12d_exit);
 
 MODULE_DESCRIPTION("Proximity Driver");
 MODULE_LICENSE("GPL");
-
