@@ -206,7 +206,7 @@ gs_st_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 			if(flag)
 				accel_delay = flag;
 			else
-				accel_delay = 10;   /*10ms*/
+				accel_delay = GS_ST_TIMRER;
 			
 			break;
 			

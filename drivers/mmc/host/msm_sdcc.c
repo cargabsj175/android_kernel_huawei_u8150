@@ -177,22 +177,6 @@ msmsdcc_request_end(struct msmsdcc_host *host, struct mmc_request *mrq)
 	if (mrq->cmd->error == -ETIMEDOUT)
 		mdelay(5);
 
-#ifdef CONFIG_MMC_MSM_PROG_DONE_SCAN
-	if ((mrq->cmd->opcode == SD_IO_RW_EXTENDED) &&
-			(mrq->cmd->arg & 0x80000000)) {
-		/* If its a write and a cmd53 set the prog_scan flag. */
-		host->prog_scan = 1;
-		/* Send STOP to let the SDCC know to stop. */
-		writel(MCI_CSPM_MCIABORT, host->base + MMCICOMMAND);
-		retval = 1;
-	}
-	if (mrq->cmd->opcode == SD_IO_RW_DIRECT) {
-		/* Ok the cmd52 following a cmd53 is received */
-		/* clear all the flags. */
-		host->prog_scan = 0;
-		host->prog_enable = 0;
-	}
-#endif
 	/*
 	 * Need to drop the host lock here; mmc_request_done may call
 	 * back into the driver...
@@ -321,16 +305,6 @@ msmsdcc_dma_complete_tlet(unsigned long data)
 
 			spin_unlock_irqrestore(&host->lock, flags);
 
-#ifdef CONFIG_MMC_MSM_PROG_DONE_SCAN
-			if ((mrq->cmd->opcode == SD_IO_RW_EXTENDED)
-				&& (mrq->cmd->arg & 0x80000000)) {
-				/* set the prog_scan in a cmd53.*/
-				host->prog_scan = 1;
-				/* Send STOP to let the SDCC know to stop. */
-				writel(MCI_CSPM_MCIABORT,
-						host->base + MMCICOMMAND);
-			}
-#endif
 			mmc_request_done(host->mmc, mrq);
 			return;
 		} else
@@ -505,14 +479,6 @@ msmsdcc_start_command_deferred(struct msmsdcc_host *host,
 		*c |= MCI_CPSM_PROGENA;
 		host->prog_enable = 1;
 	}
-
-#ifdef CONFIG_MMC_MSM_PROG_DONE_SCAN
-	if ((cmd->opcode == SD_IO_RW_DIRECT)
-			&& (host->prog_scan == 1)) {
-		*c |= MCI_CPSM_PROGENA;
-		host->prog_enable = 1;
-	}
-#endif
 
 	if (cmd == cmd->mrq->stop)
 		*c |= MCI_CSPM_MCIABORT;
@@ -1112,7 +1078,6 @@ msmsdcc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 		if ((mrq->cmd->opcode == SD_IO_RW_EXTENDED) && (mrq->data))
 			host->dummy_52_needed = 1;
 	}
-
 	msmsdcc_request_start(host, mrq);
 	spin_unlock_irqrestore(&host->lock, flags);
 }
@@ -1353,7 +1318,7 @@ set_polling(struct device *dev, struct device_attribute *attr,
 		if (host->pdev_id == SDCC_WIFI_SLOT) {
 		printk("%s: no need to enable polling for slot 2 \n",__FUNCTION__);
 		mmc->caps &= ~MMC_CAP_NEEDS_POLL;
-        }
+		}
 		mmc_detect_change(host->mmc, 0);
 	} else {
 		mmc->caps &= ~MMC_CAP_NEEDS_POLL;
@@ -1673,7 +1638,6 @@ msmsdcc_probe(struct platform_device *pdev)
 	else
 	 	ret = request_irq(irqres->start, msmsdcc_pio_irq, IRQF_SHARED,
 				  DRIVER_NAME " (pio)", host);
-		
 	if (ret)
 		goto irq_free;
 
@@ -1977,7 +1941,7 @@ static int __init msmsdcc_init(void)
 #endif
 #ifndef HUAWEI_BCM4329
 	wifi_chip_is_bcm = board_support_bcm_wifi(NULL);
-    printk(KERN_ERR"%s: now wifi_chip_is_bcm is set to %d\n", __func__, wifi_chip_is_bcm);
+	printk(KERN_ERR"%s: now wifi_chip_is_bcm is set to %d\n", __func__, wifi_chip_is_bcm);
 #endif
 
 	return platform_driver_register(&msmsdcc_driver);

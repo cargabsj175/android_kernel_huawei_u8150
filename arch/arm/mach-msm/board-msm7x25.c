@@ -3314,7 +3314,7 @@ char* get_product_name(void)
   }
 }
 
-#endif  /* CONFIG_USB_AUTO_INSTALL */
+#endif  /* CONFIG_HUAWEI_USB_FUNCTION */
 /* add virtual keys fucntion */
 /* same product use same config for virtual key */
 static ssize_t synaptics_virtual_keys_show(struct kobject *kobj,
