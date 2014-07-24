@@ -25,18 +25,20 @@ config SENSORS_TSL2550
 
 	  This driver can also be built as a module.  If so, the module
 	  will be called tsl2550.
+	  
 config SENSORS_AKM8973
 	tristate "AKM8973 Compass Driver"
 	depends on I2C
 	help
-	 AKM8973 Compass Driver implemented by HTC.
+	  AKM8973 Compass Driver implemented by HTC.
 
-config  UPDATE_COMPASS_FIRMWARE
-        depends on HUAWEI_FEATURE_DEBUG
+config UPDATE_COMPASS_FIRMWARE
+    depends on HUAWEI_FEATURE_DEBUG
 	default n
-        bool "update akm8973 compass firmware"
-        help
-          Say Y here if you want to update akm8973 compass firmware 
+    bool "update akm8973 compass firmware"
+    help
+      Say Y here if you want to update akm8973 compass firmware 
+          
 config SENSORS_AKM8976
 	tristate "AKM8976 Compass Driver"
 	depends on I2C
@@ -71,12 +73,14 @@ config VP_A1026
 	depends on I2C
 	help
 	  A1026 Voice Processor Driver implemented by HTC.
+	  
 config QWERTY_KEYPAD_ADP5587
 	tristate "Qwerty Keypad Controller Driver"
 	depends on I2C
 	default y
 	help
 	 Driver for Qwerty Keypad Controller Driver.
+	 
 config SENSORS_ST_LSM303DLH
 	tristate "LSM303DLH is a 6D sensors(gs&ms)"
 	depends on HUAWEI_KERNEL
