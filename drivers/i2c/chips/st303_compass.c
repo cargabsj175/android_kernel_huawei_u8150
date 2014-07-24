@@ -155,7 +155,7 @@ static void AKECS_Report_Value(short *rbuf)
 	struct st303_data *data = i2c_get_clientdata(this_client);
 
 #if DEBUG
-	printk("AKECS_Report_Value: %d %d %d ", rbuf[0], rbuf[1], rbuf[2]);
+	printk("%d %d %d ", rbuf[0], rbuf[1], rbuf[2]);
 	printk("%d %d %d ", rbuf[3], rbuf[4], rbuf[5]);
 	printk("\n");
 #endif
@@ -388,7 +388,6 @@ st303d_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 			}
 			
 #if DEBUG
-			printk("Inside rwbuf[0-6]=%d,%d,%d,%d,%d,%d,%d",rwbuf[0],rwbuf[1],rwbuf[2],rwbuf[3],rwbuf[4],rwbuf[5],rwbuf[6],rwbuf[7]);
 			printk("m %d ",(signed short)(((rwbuf[1])<<8)|rwbuf[2]));
 			printk(" %d ",(signed short)(((rwbuf[3])<<8)|rwbuf[4]));
 			printk(" %d ",(signed short)(((rwbuf[5])<<8)|rwbuf[6]));
