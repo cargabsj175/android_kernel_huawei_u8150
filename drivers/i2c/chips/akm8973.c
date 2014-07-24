@@ -262,21 +262,17 @@ static int AKECS_TransRBuff(char *rbuf, int size)
 
 #if 0
 /********************************************************************/
-int Acc_buf[3];
-//extern int gs_adi_sensor_flag (void );
+extern int gs_adi_sensor_flag (void );
 extern int gs_st_data_to_compass(int accel_data [3]);
-//extern int gs_adi_data_to_compass(int accel_data [3]);
+extern int gs_adi_data_to_compass(int accel_data [3]);
 
 static int Compass_GetAccelerationData(int * accel_data )
 {
-	printk(KERN_DEBUG "akm Compass_GetAcceleaationData");
-   	//if (gs_adi_sensor_flag())
-	//	return gs_adi_data_to_compass(accel_data);
+   	if (gs_adi_sensor_flag())
+		return gs_adi_data_to_compass(accel_data);
 	
-	//else
-	int ret=gs_st_data_to_compass(accel_data);
-	printk(KERN_DEBUG "akm Compass_GetAcceleaationData,accel_data[0]=%d,[1]=%d,[2]=%d",accel_data[0],accel_data[1],accel_data[2]);
-		return ret;
+	else
+		return gs_st_data_to_compass(accel_data);
 }
 
 /**********************************************************************/
@@ -825,14 +821,14 @@ int akm8973_probe(struct i2c_client *client, const struct i2c_device_id * devid)
 	akm->input_dev->name = "compass";
 
 	err = input_register_device(akm->input_dev);
-
-    //err = 0;//disabled by Joey Jiao
+*/
+    err = 0;
 	if (err) {
 		printk(KERN_ERR
 		       "akm8973_probe: Unable to register input device: %s\n",
 		       akm->input_dev->name);
 		goto exit_input_register_device_failed;
-	}*/
+	}
 
 	err = misc_register(&akmd_device);
 	if (err) {

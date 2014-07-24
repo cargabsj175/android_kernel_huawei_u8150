@@ -132,7 +132,7 @@ static int AKI2C_RxData(char *rxData, int length)
 
 static int AKI2C_TxData(char *txData, int length)
 {
-#if 1
+#if 0
 	struct i2c_msg msg[] = {
 		{
 		 .addr = this_client->addr,
@@ -401,7 +401,6 @@ st303d_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 #if DEBUG
 			printk("ECS_IOCTL_WRITE %x\n", cmd);
 			printk(" len %02x:", rwbuf[0]);
-			int i;
 			for(i=0; i<rwbuf[0]; i++){
 				printk(" %02x", rwbuf[i+1]);
 			}
