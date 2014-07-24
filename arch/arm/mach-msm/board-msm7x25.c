@@ -97,12 +97,10 @@
 #endif
 #endif
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_KERNEL
 #include "../../../drivers/usb/gadget/usb_switch_huawei.h"
 #include "../../../arch/arm/mach-msm/proc_comm.h"
 #include "smd_private.h"
-
-#ifdef CONFIG_HUAWEI_KERNEL
 #include <linux/touch_platform_config.h>
 #endif
 
@@ -119,6 +117,8 @@ atomic_t touch_detected_yet = ATOMIC_INIT(0);
 struct vreg *vreg_gp5 = NULL;
 #endif
 
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
+
 #define USB_SERIAL_LEN 20
 smem_huawei_vender usb_para_data;
 
@@ -134,7 +134,7 @@ usb_pid_stru usb_pid_array[]={
 
 /* pointer to the member of usb_pid_array[], according to the current product */
 usb_pid_stru *curr_usb_pid_ptr = &usb_pid_array[0];
-#endif  /* #ifdef CONFIG_USB_AUTO_INSTALL */
+#endif  /* #ifdef CONFIG_HUAWEI_USB_FUNCTION */
 
 
 
@@ -257,7 +257,7 @@ static struct usb_composition usb_func_composition[] = {
 	},
 #endif
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
     /* new requirement: usb tethering */
     {
         /* MSC, WLAN */
@@ -327,7 +327,7 @@ static struct usb_composition usb_func_composition[] = {
 		.adb_functions	    = 0x41276,
 	},
 
-#endif  /* CONFIG_USB_AUTO_INSTALL */
+#endif  /* CONFIG_HUAWEI_USB_FUNCTION */
 
 #ifdef CONFIG_USB_ANDROID_CDC_ECM
 	{
@@ -371,25 +371,25 @@ static struct platform_device mass_storage_device = {
 	},
 };
 static struct android_usb_platform_data android_usb_pdata = {
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 	.vendor_id	= HUAWEI_VID,
 /* < google_usb_drv */	
 //	.vendor_id	= 0x18D1, /* 0x05C6, */
 /* google_usb_drv > */	
 #else	
 	.vendor_id	= 0x05C6,
-#endif  /* CONFIG_USB_AUTO_INSTALL */
+#endif  /* CONFIG_HUAWEI_USB_FUNCTION */
 	.version	= 0x0100,
 	.compositions   = usb_func_composition,
 	.num_compositions = ARRAY_SIZE(usb_func_composition),
 /* add new pid config for google */
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 	.product_name	= "Ideos",
 	.manufacturer_name = "Huawei Incorporated",
 #else	
 	.product_name	= "Qualcomm HSUSB Device",
 	.manufacturer_name = "Qualcomm Incorporated",
-#endif  /* CONFIG_USB_AUTO_INSTALL */
+#endif  /* CONFIG_HUAWEI_USB_FUNCTION */
 };
 static struct platform_device android_usb_device = {
 	.name	= "android_usb",
@@ -2644,7 +2644,7 @@ static uint32_t msm_sdcc_setup_power(struct device *dv, unsigned int vdd)
 static struct mmc_platform_data msm7x2x_sdcc_data = {
 	.ocr_mask	= MMC_VDD_28_29,
 	.translate_vdd	= msm_sdcc_setup_power,
-	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,  
+	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
 	.msmsdcc_fmin	= 144000,
 	.msmsdcc_fmid	= 24576000,
 	.msmsdcc_fmax	= 64000000,
@@ -3102,7 +3102,7 @@ static void proc_factory_para(void)
 } 
 #endif
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 /* provide a method to map pid_index to usb_pid, 
  * pid_index is kept in NV(4526). 
  * At power up, pid_index is read in modem and transfer to app in share memory.
@@ -3439,9 +3439,9 @@ static void __init msm7x2x_init(void)
 	msm_device_hsusb_peripheral.dev.platform_data = &msm_hsusb_pdata;
 #endif
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
     proc_usb_para();
-#endif  /* #ifdef CONFIG_USB_AUTO_INSTALL */
+#endif  /* #ifdef CONFIG_HUAWEI_USB_FUNCTION */
 
     /* init the factory para in kernel */
 #ifdef CONFIG_HUAWEI_KERNEL
@@ -4009,7 +4009,18 @@ int board_surport_fingers(bool * is_surport_fingers)
          return -ENOMEM;
     }
 
-        *is_surport_fingers = true;
+    if( machine_is_msm7x25_u8500() || machine_is_msm7x25_um840() \
+     || machine_is_msm7x25_u8350() || machine_is_msm7x25_u8130() \
+	 || machine_is_msm7x25_c8510() || machine_is_msm7x25_u8160() \
+     || machine_is_msm7x25_c8500() || machine_is_msm7x25_c8600() \
+	 || machine_is_msm7x25_u8150() || machine_is_msm7x25_c8150())
+    {
+         *is_surport_fingers = true;
+    }
+    else    
+    {
+        *is_surport_fingers = false;
+    }
 
     return result;
 }

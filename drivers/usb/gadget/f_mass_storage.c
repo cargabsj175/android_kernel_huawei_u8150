@@ -79,7 +79,7 @@
 #include "f_mass_storage.h"
 #include "gadget_chips.h"
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 #include "usb_switch_huawei.h"
 #endif
 

@@ -111,7 +111,8 @@ static inline int reg_write(struct gs_data *gs, int reg, uint8_t val)
 
 static int sensor_data[4];
 /*adjust device name */
-static char st_device_id[] = "st_35de";
+//change from st-35de to ST35DE to make akmd2 works well by Joey Jiao
+static char st_device_id[] = "ST35DE";
 
 int gs_st_data_to_compass(int accel_data [3])
 {

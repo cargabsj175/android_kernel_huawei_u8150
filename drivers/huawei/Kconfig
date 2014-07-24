@@ -146,6 +146,7 @@ config HUAWEI_FOTA_UPDATA
 	  if Y ,select HUAWEI_FOTA_UPDATA, this supprot fota updata
 
 config USB_AUTO_INSTALL
+	depends on HUAWEI_USB_FUNCTION=y
 	bool "usb auto install"
 	default n
 	help

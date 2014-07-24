@@ -62,7 +62,7 @@
 #include "epautoconf.c"
 #include "composite.c"
 
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 #include "usb_switch_huawei.h"
 
 static struct delayed_work android_usb_switch_work;
@@ -76,7 +76,7 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("1.0");
 
 /* product id */
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 static u16 product_id =PID_NORMAL; 
 #else
 static u16 product_id = 0x9018;
@@ -381,15 +381,15 @@ static int  android_bind(struct usb_composite_dev *cdev)
 	if (id < 0)
 		return id;
 	strings_dev[STRING_SERIAL_IDX].id = id;
-#ifdef CONFIG_USB_AUTO_INSTALL
-    if(0 == usb_sn_valid)
-    {
-	    device_desc.iSerialNumber = 0;
-    }
-    else
-    {
-	    device_desc.iSerialNumber = id;
-    }
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
+	if(0 == usb_sn_valid)
+	{
+		device_desc.iSerialNumber = 0;
+	}
+	else
+	{
+		device_desc.iSerialNumber = id;
+	}
 #else
 	device_desc.iSerialNumber = id;
 #endif  
@@ -503,11 +503,11 @@ static int android_switch_composition(u16 pid)
 	struct usb_composition *func;
 	int ret;
 
-#ifdef CONFIG_USB_AUTO_INSTALL
-    u16 old_pid = product_id;
-    USB_PR("%s\n", __func__);
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
+	u16 old_pid = product_id;
+	USB_PR("%s\n", __func__);
 #endif  
-    
+
 	/* Validate the prodcut id */
 	func = android_validate_product_id(pid);
 	if (!func) {
@@ -696,7 +696,7 @@ out:
 
 	return ret;
 }
-#ifdef CONFIG_USB_AUTO_INSTALL
+#ifdef CONFIG_HUAWEI_USB_FUNCTION
 void unprobe_usb_composition(void)
 {
 	USB_PR("%s begin\n", __func__);
@@ -736,7 +736,9 @@ void set_usb_sn(char *sn_ptr)
 		usb_sn_valid = 1;
 	}
 }
+#endif
 
+#ifdef CONFIG_USB_AUTO_INSTALL
 static void android_usb_switch_func(struct work_struct *w)
 {
 	USB_PR("%s\n", __func__);
@@ -785,7 +787,6 @@ void android_delay_work_init(int add_flag)
 		}
 	}
 }
-
 
 int usb_switch_composition(u16 pid, unsigned long delay_tick)
 {

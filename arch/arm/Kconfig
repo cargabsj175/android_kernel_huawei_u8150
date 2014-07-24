@@ -26,6 +26,21 @@ config ARM
 	  Europe.  There is an ARM Linux project with a web page at
 	  <http://www.arm.linux.org.uk/>.
 
+config KERNEL_USE_GZIP
+	bool
+	default y
+	select HAVE_KERNEL_GZIP
+	
+config KERNEL_USE_LZ4
+	bool
+	default n
+	select HAVE_KERNEL_LZ4
+
+config KERNEL_USE_LZO
+	bool
+	default n
+	select HAVE_KERNEL_LZO
+
 config HAVE_PWM
 	bool
 
