@@ -158,8 +158,7 @@ static unsigned int sub_board_id = 0;
 #endif
 #define HUAWEI_SHARE_MEMORY_SIZE (424*1024) //424K
 
-//#define MSM_FB_SIZE		0x200000
-#define MSM_FB_SIZE		0x100000
+#define MSM_FB_SIZE		0x200000
 #define PMEM_KERNEL_EBI1_SIZE	0x80000
 #define MSM_PMEM_AUDIO_SIZE	0x121000
 #endif
