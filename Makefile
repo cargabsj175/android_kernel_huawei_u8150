@@ -325,12 +325,12 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-MODFLAGS	= -DMODULE -mtune=arm1136j-s
+MODFLAGS	= -DMODULE -mcpu=arm1136j-s
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds --strip-debug
-CFLAGS_KERNEL	= -mtune=arm1136j-s
-AFLAGS_KERNEL	= -mtune=arm1136j-s
+CFLAGS_KERNEL	= -mcpu=arm1136j-s
+AFLAGS_KERNEL	= -mcpu=arm1136j-s
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -347,7 +347,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks -mtune=arm1136j-s
+		   -fno-delete-null-pointer-checks -mcpu=arm1136j-s
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
